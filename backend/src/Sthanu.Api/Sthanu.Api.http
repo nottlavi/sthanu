@@ -1,0 +1,6 @@
+@Sthanu.Api_HostAddress = http://localhost:5289
+
+GET {{Sthanu.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
