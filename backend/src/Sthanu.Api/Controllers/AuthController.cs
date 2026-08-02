@@ -11,22 +11,32 @@ using Sthanu.Application.Interfaces;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ISupabaseAuthService _supabaseAuthService;
 
-    public AuthController(IUserService userService)
+    public AuthController(IUserService userService, ISupabaseAuthService supabaseAuthService)
     {
         _userService = userService;
+        _supabaseAuthService = supabaseAuthService;
     }
 
     [HttpPost("send-otp")]
-    public IActionResult SendOtp([FromBody] SendOtpRequest request)
+    public async Task<IActionResult> SendOtpAsync([FromBody] SendOtpRequest request)
     {
+        var (success, message) = await _supabaseAuthService.SendOtpAsync(request.PhoneNumber);
+
+        if (!success) return BadRequest(new { message = "Failed to send OTP", error = message });
+
         return Ok(new { message = $"OTP sent successfully to {request.PhoneNumber}" });
     }
 
     [HttpPost("verify-otp")]
-    public IActionResult VerifyOtp([FromBody] VerifyOtpRequest request)
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
     {
-        return Ok(new { message = "OTP verified successfully", token = "mock-jwt-token" });
+        var (success, accessToken, message) = await _supabaseAuthService.VerifyOtpAsync(request.PhoneNumber, request.OtpCode);
+
+        if (!success) return BadRequest(new { message = "Invalid or expired OTP", error = message });
+
+        return Ok(new { message = "OTP verified successfully", token = accessToken });
     }
 
     [HttpPost("complete-profile")]
