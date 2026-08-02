@@ -46,7 +46,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
 
-var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+var supabaseUrl = builder.Configuration["Supabase:Url"];
 
 builder.Services.AddAuthentication(options =>
 {
@@ -55,13 +55,13 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.Authority = $"{supabaseUrl}/auth/v1";
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret!)),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        RequireExpirationTime = true,
+        ValidateIssuer = true,
+        ValidIssuer = $"{supabaseUrl}/auth/v1",
+        ValidateAudience = true,
+        ValidAudience = "authenticated",
         ValidateLifetime = true
     };
 });
