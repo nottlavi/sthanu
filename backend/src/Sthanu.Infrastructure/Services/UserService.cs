@@ -1,5 +1,6 @@
 namespace Sthanu.Infrastructure.Services;
 
+using Microsoft.EntityFrameworkCore;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
 using Sthanu.Infrastructure.Persistence;
@@ -27,5 +28,10 @@ public class UserService : IUserService
         await _db.SaveChangesAsync();
 
         return user;
+    }
+
+    public async Task<User?> GetUserByPhoneAsync(string phoneNumber)
+    {
+        return await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
     }
 }

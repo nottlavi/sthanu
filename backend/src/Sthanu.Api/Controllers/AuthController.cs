@@ -36,7 +36,21 @@ public class AuthController : ControllerBase
 
         if (!success) return BadRequest(new { message = "Invalid or expired OTP", error = message });
 
-        return Ok(new { message = "OTP verified successfully", token = accessToken });
+        var existingUser = await _userService.GetUserByPhoneAsync(request.PhoneNumber);
+
+        if (existingUser != null)
+        {
+            return Ok(new
+            {
+                message = "Login successfull",
+                token = accessToken,
+                isProfileComplete = true,
+            });
+        }
+
+
+
+        return Ok(new { message = "OTP verified successfully", token = accessToken, isProfileComplete = false });
     }
 
     [HttpPost("complete-profile")]
@@ -49,6 +63,16 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(phoneNumber))
         {
             return BadRequest(new { message = "A verified phone number is required to complete registration." });
+        }
+
+        var existingUser = await _userService.GetUserByPhoneAsync(phoneNumber);
+
+        if (existingUser != null)
+        {
+            return BadRequest(new
+            {
+                message = "User profile for this phone number is already registered.",
+            });
         }
 
         var user = await _userService.CreateUserAsync(
