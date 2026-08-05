@@ -32,6 +32,10 @@ public class UserService : IUserService
 
     public async Task<User?> GetUserByPhoneAsync(string phoneNumber)
     {
-        return await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+        var cleanPhone = phoneNumber.Replace("+", "").Trim();
+
+        Console.WriteLine(cleanPhone);
+
+        return await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone);
     }
 }

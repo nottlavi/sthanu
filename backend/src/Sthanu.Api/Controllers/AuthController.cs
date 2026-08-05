@@ -38,6 +38,9 @@ public class AuthController : ControllerBase
 
         var existingUser = await _userService.GetUserByPhoneAsync(request.PhoneNumber);
 
+        // Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(existingUser));
+
+
         if (existingUser != null)
         {
             return Ok(new
@@ -45,6 +48,7 @@ public class AuthController : ControllerBase
                 message = "Login successfull",
                 token = accessToken,
                 isProfileComplete = true,
+                user = existingUser
             });
         }
 

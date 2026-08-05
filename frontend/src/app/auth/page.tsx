@@ -52,9 +52,16 @@ export default function AuthPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || data.error || "Invalid OTP");
 
+      console.log(data);
+
       setToken(data.token);
       localStorage.setItem("auth_token", data.token);
-      setStep(3);
+
+      if (data.isProfileComplete && data.user) {
+        setUser(data.user);
+      } else {
+        setStep(3);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -108,8 +115,8 @@ export default function AuthPage() {
             <div className="w-12 h-12 bg-emerald-900/50 border border-emerald-500/50 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
               ✓
             </div>
-            <h2 className="text-xl font-semibold text-slate-100">Welcome, {user.firstName}!</h2>
-            <p className="text-sm text-slate-400 mt-1">Profile registered for {user.phoneNumber}</p>
+            <h2 className="text-xl font-semibold text-slate-100">Welcome back, {user.firstName}!</h2>
+            <p className="text-sm text-slate-400 mt-1">Logged in with {user.phoneNumber}</p>
             <p className="text-xs text-slate-500 mt-4">City: {user.city}</p>
           </div>
         ) : step === 1 ? (
