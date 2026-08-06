@@ -11,5 +11,9 @@ public class User : BaseEntity
     public required string PhoneNumber { get; set; }
     public required string City { get; set; }
 
-    public int TotalDonations { get; set; } = 0;
+    public Guid? FamilyGroupId { get; set; }
+    public FamilyGroup? FamilyGroup { get; set; }
+
+    public int TotalDonations
+    { get; set; } = 0;
 }
