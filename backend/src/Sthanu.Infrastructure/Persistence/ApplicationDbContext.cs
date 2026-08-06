@@ -13,4 +13,5 @@ public class ApplicationDbContext : DbContext
     public DbSet<Facility> Facilities { get; set; }
     public DbSet<BloodUnit> BloodUnits { get; set; }
     public DbSet<VenomUnit> VenomUnits { get; set; }
+    public DbSet<FamilyGroup> FamilyGroups { get; set; }
 }
