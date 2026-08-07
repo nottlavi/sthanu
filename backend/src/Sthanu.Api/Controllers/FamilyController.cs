@@ -59,6 +59,25 @@ public class FamilyController : ControllerBase
         }
     }
 
+    [HttpGet("get-family")]
+    [Authorize]
+    public async Task<IActionResult> GetFamilyAsync()
+    {
+        var user = await GetCurrentUserAsync();
+
+        if (user == null) return Unauthorized(new { message = "User not found." });
+
+        try
+        {
+            var familyGroup = await _familyService.GetFamilyAsync(user.Id);
+
+            return Ok(familyGroup);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 
     private async Task<User?> GetCurrentUserAsync()
     {

@@ -41,11 +41,17 @@ public class FamilyService : IFamilyService
         return MapToFamilyResponse(newFamily);
     }
 
-    public async Task<FamilyGroupResponse?> GetFamilyAsync(Guid familyId)
+    public async Task<FamilyGroupResponse?> GetFamilyAsync(Guid userId)
     {
-        var familyGroup = await _db.FamilyGroups.Include(f => f.Members).FirstOrDefaultAsync(f => f.Id == familyId);
+        var user = await _db.Users.FindAsync(userId);
 
-        if (familyGroup == null) return null;
+        if (user == null) { throw new Exception("User not found"); }
+
+        if (user.FamilyGroupId == null) { throw new Exception("User doesn't belong to any family"); }
+
+        var familyGroup = await _db.FamilyGroups.Include(f => f.Members).FirstOrDefaultAsync(f => f.Id == user.FamilyGroupId);
+
+        if (familyGroup == null) { throw new Exception("Family group not found"); }
 
         return MapToFamilyResponse(familyGroup);
     }
