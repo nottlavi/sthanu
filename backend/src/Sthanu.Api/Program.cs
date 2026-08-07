@@ -7,6 +7,7 @@ using Sthanu.Application.Interfaces;
 using Sthanu.Infrastructure.Persistence;
 using Sthanu.Infrastructure.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>

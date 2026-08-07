@@ -39,6 +39,27 @@ public class FamilyController : ControllerBase
         }
     }
 
+    [HttpPost("join")]
+    [Authorize]
+    public async Task<IActionResult> JoinFamilyAsync([FromBody] JoinFamilyRequest request)
+    {
+        var user = await GetCurrentUserAsync();
+
+        if (user == null) return Unauthorized(new { message = "User not found." });
+
+        try
+        {
+            var familyGroup = await _familyService.JoinFamilyAsync(user.Id, request);
+
+            return Ok(familyGroup);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+
     private async Task<User?> GetCurrentUserAsync()
     {
         var phone = User.FindFirst("phone")?.Value ?? User.FindFirst(ClaimTypes.MobilePhone)?.Value;
