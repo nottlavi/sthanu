@@ -5,7 +5,7 @@ using Sthanu.Domain.Entities;
 
 public interface IFamilyService
 {
-    Task<FamilyGroupResponse> CreateFamilyAsync(Guid id, CreateFamilyRequest request);
-    Task<FamilyGroupResponse?> JoinFamilyAsync(Guid id, JoinFamilyRequest request);
-    Task<FamilyGroupResponse?> GetFamilyAsync(Guid id);
+    Task<FamilyGroupResponse> CreateFamilyAsync(Guid userId, CreateFamilyRequest request);
+    Task<FamilyGroupResponse?> JoinFamilyAsync(Guid userId, JoinFamilyRequest request);
+    Task<FamilyGroupResponse?> GetFamilyAsync(Guid familyId);
 }

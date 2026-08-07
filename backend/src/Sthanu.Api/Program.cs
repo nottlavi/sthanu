@@ -55,6 +55,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
+builder.Services.AddScoped<IFamilyService, FamilyService>();
 
 var supabaseUrl = builder.Configuration["Supabase:Url"];
 
