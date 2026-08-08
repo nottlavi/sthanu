@@ -24,3 +24,17 @@
 	- frontend creates a zepto like address form.
 	- on click "save" backend api gets called.
     - the user's table saves this address for once and all (can be edited later).
+
+## 3. expected payload from the frontend
+```
+{
+  "addressLine": "Flat 402, B-Wing, Royal Palms",
+  "landmark": "Near Goodluck Cafe",
+  "city": "Pune",
+  "state": "Maharashtra",
+  "pincode": "411004",
+  "latitude": 18.5204303,
+  "longitude": 73.8567437
+}
+```
+
