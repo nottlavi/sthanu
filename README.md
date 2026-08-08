@@ -64,7 +64,7 @@ To automate non-emergency donor rewards without human review:
 
 ---
 
-## Project & Roadmap
+## Roadmap
 
 - High-concurrency system architecture and domain design
 - Database schema & PostGIS spatial indexing setup
