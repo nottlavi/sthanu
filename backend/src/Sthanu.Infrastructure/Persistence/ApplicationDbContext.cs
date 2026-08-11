@@ -14,12 +14,15 @@ public class ApplicationDbContext : DbContext
     public DbSet<BloodUnit> BloodUnits { get; set; }
     public DbSet<VenomUnit> VenomUnits { get; set; }
     public DbSet<FamilyGroup> FamilyGroups { get; set; }
+    public DbSet<Address> Addresses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<User>().HasOne(u => u.FamilyGroup).WithMany(f => f.Members).HasForeignKey(u => u.FamilyGroupId).OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<User>().HasOne(u => u.HomeAddress).WithOne(a => a.User).HasForeignKey<Address>(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<FamilyGroup>().HasOne(f => f.AdminUser).WithMany().HasForeignKey(f => f.AdminUserId).OnDelete(DeleteBehavior.Restrict);
     }

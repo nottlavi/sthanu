@@ -82,7 +82,6 @@ public class AuthController : ControllerBase
         var user = await _userService.CreateUserAsync(
             request.FirstName,
             request.LastName,
-            request.City,
             phoneNumber
         );
 

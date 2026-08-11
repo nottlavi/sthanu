@@ -8,8 +8,7 @@ public record VerifyOtpRequest(string PhoneNumber, string OtpCode);
 
 public record CompleteProfileRequest(
     string FirstName,
-    string LastName,
-    string City
+    string LastName
 );
 
 

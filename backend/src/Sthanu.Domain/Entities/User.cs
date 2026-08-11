@@ -9,11 +9,12 @@ public class User : BaseEntity
 
     public string? Email { get; set; }
     public required string PhoneNumber { get; set; }
-    public required string City { get; set; }
+    // public required string City { get; set; }
 
     public Guid? FamilyGroupId { get; set; }
     public FamilyGroup? FamilyGroup { get; set; }
 
-    public int TotalDonations
-    { get; set; } = 0;
+    public Address? HomeAddress { get; set; }
+
+    public int TotalDonations { get; set; } = 0;
 }

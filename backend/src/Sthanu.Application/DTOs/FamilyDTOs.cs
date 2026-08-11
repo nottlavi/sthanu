@@ -9,7 +9,6 @@ public record FamilyMemberDto(
     string FirstName,
     string LastName,
     string PhoneNumber,
-    string City,
     int TotalDonations
 );
 

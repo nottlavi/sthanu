@@ -14,13 +14,12 @@ public class UserService : IUserService
         _db = db;
     }
 
-    public async Task<User> CreateUserAsync(string firstName, string lastName, string city, string phoneNumber)
+    public async Task<User> CreateUserAsync(string firstName, string lastName, string phoneNumber)
     {
         var user = new User
         {
             FirstName = firstName,
             LastName = lastName,
-            City = city,
             PhoneNumber = phoneNumber
         };
 

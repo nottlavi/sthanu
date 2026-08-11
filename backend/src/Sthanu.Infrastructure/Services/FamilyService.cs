@@ -93,7 +93,6 @@ public class FamilyService : IFamilyService
             m.FirstName,
             m.LastName,
             m.PhoneNumber,
-            m.City,
             m.TotalDonations
         )).ToList();
 
