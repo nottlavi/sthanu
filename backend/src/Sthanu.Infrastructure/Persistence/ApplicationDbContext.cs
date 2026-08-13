@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<VenomUnit> VenomUnits { get; set; }
     public DbSet<FamilyGroup> FamilyGroups { get; set; }
     public DbSet<Address> Addresses { get; set; }
+    public DbSet<Incident> Incidents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,5 +26,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>().HasOne(u => u.HomeAddress).WithOne(a => a.User).HasForeignKey<Address>(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<FamilyGroup>().HasOne(f => f.AdminUser).WithMany().HasForeignKey(f => f.AdminUserId).OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Incident>().HasMany(i => i.Participants).WithMany();
     }
 }
