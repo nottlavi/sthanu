@@ -7,6 +7,7 @@ using Sthanu.Application.Interfaces;
 using Sthanu.Infrastructure.Persistence;
 using Sthanu.Infrastructure.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -55,6 +56,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
+builder.Services.AddScoped<IFamilyService, FamilyService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 var supabaseUrl = builder.Configuration["Supabase:Url"];
 
