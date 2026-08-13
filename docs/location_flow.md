@@ -8,12 +8,12 @@
 
 	### the flow
 	- set location
- 		1. zepto type form for live location fetch
+ 		1. button to access coords using gps.
   		2. or permanent address selection
-  		3. recently three used location
-  	- the finalized address gets stored temporarily
+  		3. or recently three used location
+  	- the finalized location gets stored temporarily
   	- when the incident is raised on the system
-  	- this address gets linked to that incident.
+  	- this location gets linked to that incident.
 
 
 ## 2. when setting permanent address
