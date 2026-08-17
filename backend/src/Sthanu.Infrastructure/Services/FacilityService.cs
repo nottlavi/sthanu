@@ -1,5 +1,7 @@
 namespace Sthanu.Infrastructure.Services;
 
+using System.Runtime.ConstrainedExecution;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using Sthanu.Application.DTOs;
@@ -17,23 +19,35 @@ public class FacilityService : IFacilityService
         _db = db;
     }
 
-    public async Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude, double Longitude, IncidentType incidentType)
+    public async Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude, double Longitude, Guid incidentId, Guid userId)
     {
+        var incident = await _db.Incidents.Include(i => i.Participants).FirstOrDefaultAsync(i => i.Id == incidentId);
+
+        if (incident == null)
+        {
+            throw new Exception("Incident not found.");
+        }
+
+        if (incident.UserId != userId && !incident.Participants.Any(p => p.Id == userId))
+        {
+            throw new Exception("You are not authorized to access this incident.");
+        }
+
         var userLocation = new Point(Longitude, Latitude) { SRID = 4326 };
 
         List<Facility> facilities;
 
-        if (incidentType == IncidentType.Blood)
+        if (incident.IncidentType == IncidentType.Blood)
         {
             facilities = await _db.Facilities
-          .Include(f => f.BloodUnits)
+          .Include(f => f.BloodUnits).Where(f => f.BloodUnits.Any(b => b.BloodGroup == incident.BloodGroup && b.Quantity > 0))
           .OrderBy(f => f.Location.Distance(userLocation))
           .ToListAsync();
         }
         else
         {
             facilities = await _db.Facilities
-     .Include(f => f.VenomUnits)
+     .Include(f => f.VenomUnits).Where(f => f.VenomUnits.Any(v => v.Quantity > 0))
      .OrderBy(f => f.Location.Distance(userLocation))
      .ToListAsync();
         }
@@ -43,12 +57,12 @@ public class FacilityService : IFacilityService
             var distanceMeters = f.Location.Distance(userLocation);
             var distanceKm = Math.Round(distanceMeters / 1000.0, 1);
 
-            var bloodStockDtos = f.BloodUnits.Select(b => new BloodStockDto(
+            var bloodStockDtos = f.BloodUnits.Where(b => b.BloodGroup == incident.BloodGroup).Select(b => new BloodStockDto(
                 b.BloodGroup,
                 b.Quantity
             )).ToList();
 
-            var venomStocksDtos = f.VenomUnits.Select(v => new VenomStockDto(v.Type, v.Quantity))
+            var venomStocksDtos = f.VenomUnits.Select(v => new VenomStockDto(v.Quantity))
             .ToList();
 
             return new FacilityResponse(

@@ -1,11 +1,12 @@
 namespace Sthanu.Application.DTOs;
 
+using System.Threading.Tasks.Dataflow;
 using Sthanu.Domain.Enums;
 
 public record GetNearestFacilitiesRequest(
     double Latitude,
     double Longitude,
-    IncidentType IncidentType
+    Guid IncidentId
 );
 
 public record BloodStockDto(
@@ -14,7 +15,6 @@ public record BloodStockDto(
 );
 
 public record VenomStockDto(
-    string Type,
     int Quantity
 );
 

@@ -35,7 +35,7 @@ public class FacilityController : ControllerBase
 
         try
         {
-            var facilities = await _facilityService.GetNearByFacilitiesAsync(request.Latitude, request.Longitude, request.IncidentType);
+            var facilities = await _facilityService.GetNearByFacilitiesAsync(request.Latitude, request.Longitude, request.IncidentId, user.Id);
 
             return Ok(facilities);
         }
