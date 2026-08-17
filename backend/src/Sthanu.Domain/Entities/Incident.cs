@@ -8,9 +8,16 @@ public class Incident : BaseEntity
     public Guid UserId { get; set; }
     public Guid? FamilyId { get; set; }
 
+    public IncidentType IncidentType { get; set; } = IncidentType.Blood;
+
     public required string LocationName { get; set; }
     public required double Latitude { get; set; }
     public required double Longitude { get; set; }
+
+    public BloodGroup? BloodGroup { get; set; }
+    public int? UnitsRequired { get; set; }
+
+    public int? VialsRequired { get; set; }
 
     public ICollection<User> Participants { get; set; } = new List<User>();
 

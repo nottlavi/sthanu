@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Sthanu.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Sthanu.Infrastructure.Persistence;
 namespace Sthanu.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817040646_AddBloodAndVenomIncidentHierarchy")]
+    partial class AddBloodAndVenomIncidentHierarchy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -208,17 +211,16 @@ namespace Sthanu.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<byte?>("BloodGroup")
-                        .HasColumnType("smallint");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
+
                     b.Property<Guid?>("FamilyId")
                         .HasColumnType("uuid");
-
-                    b.Property<byte>("IncidentType")
-                        .HasColumnType("smallint");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");
@@ -237,21 +239,19 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("smallint");
 
-                    b.Property<int?>("UnitsRequired")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("VialsRequired")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.ToTable("Incidents");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Incident");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Sthanu.Domain.Entities.User", b =>
@@ -321,6 +321,29 @@ namespace Sthanu.Infrastructure.Migrations
                     b.HasIndex("FacilityId");
 
                     b.ToTable("VenomUnits");
+                });
+
+            modelBuilder.Entity("Sthanu.Domain.Entities.BloodIncident", b =>
+                {
+                    b.HasBaseType("Sthanu.Domain.Entities.Incident");
+
+                    b.Property<byte>("BloodGroup")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("UnitsRequired")
+                        .HasColumnType("integer");
+
+                    b.HasDiscriminator().HasValue("BloodIncident");
+                });
+
+            modelBuilder.Entity("Sthanu.Domain.Entities.VenomIncident", b =>
+                {
+                    b.HasBaseType("Sthanu.Domain.Entities.Incident");
+
+                    b.Property<int>("VialsRequired")
+                        .HasColumnType("integer");
+
+                    b.HasDiscriminator().HasValue("VenomIncident");
                 });
 
             modelBuilder.Entity("IncidentUser", b =>

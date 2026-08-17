@@ -32,13 +32,52 @@ public class IncidentService : IIncidentService
             throw new Exception("User already has an active emergency incident.");
         }
 
+        if (request.IncidentType == IncidentType.Blood)
+        {
+            if (request.BloodGroup == null)
+            {
+                throw new Exception("BloodGroup is required for a Blood emergency incident.");
+            }
+
+            if (request.VialsRequired.HasValue)
+            {
+                throw new Exception("VialsRequired cannot be provided for a Blood emergency incident.");
+            }
+
+            if (request.UnitsRequired.HasValue && request.UnitsRequired <= 0)
+            {
+                throw new Exception("UnitsRequired must be at least 1.");
+            }
+        }
+        else if (request.IncidentType == IncidentType.Venom)
+        {
+            if (request.BloodGroup.HasValue)
+            {
+                throw new Exception("BloodGroup cannot be provided for a Venom emergency incident.");
+            }
+
+            if (request.UnitsRequired.HasValue)
+            {
+                throw new Exception("UnitsRequired cannot be provided for a Venom emergency incident.");
+            }
+
+            if (request.VialsRequired.HasValue && request.VialsRequired <= 0)
+            {
+                throw new Exception("VialsRequired must be at least 1.");
+            }
+        }
+
         var incident = new Incident
         {
             UserId = userId,
             FamilyId = user.FamilyGroupId,
+            IncidentType = request.IncidentType,
             LocationName = request.LocationName,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
+            BloodGroup = request.IncidentType == IncidentType.Blood ? request.BloodGroup : null,
+            UnitsRequired = request.IncidentType == IncidentType.Blood ? (request.UnitsRequired ?? 1) : null,
+            VialsRequired = request.IncidentType == IncidentType.Venom ? (request.VialsRequired ?? 1) : null,
             Status = IncidentStatus.Active
         };
 
@@ -107,9 +146,13 @@ public class IncidentService : IIncidentService
             incident.Id,
             incident.UserId,
             incident.FamilyId,
+            incident.IncidentType,
             incident.LocationName,
             incident.Latitude,
             incident.Longitude,
+            incident.BloodGroup,
+            incident.UnitsRequired,
+            incident.VialsRequired,
             incident.ShareCode,
             incident.Status,
             incident.CreatedAtUtc,
