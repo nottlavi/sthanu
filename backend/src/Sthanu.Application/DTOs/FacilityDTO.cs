@@ -2,12 +2,23 @@ namespace Sthanu.Application.DTOs;
 
 using Sthanu.Domain.Enums;
 
+public record GetNearestFacilitiesRequest(
+    double Latitude,
+    double Longitude,
+    IncidentType IncidentType
+);
+
 public record BloodStockDto(
     BloodGroup BloodGroup,
     int Quantity
 );
 
-public record ListIncidentResponse
+public record VenomStockDto(
+    string Type,
+    int Quantity
+);
+
+public record FacilityResponse
 (
     string FacilityName,
     FacilityType Type,
@@ -21,5 +32,10 @@ public record ListIncidentResponse
     string ContactPhone,
     string? Email,
     double DistanceKm,
-    List<BloodStockDto> BloodUnits
+    List<BloodStockDto>? BloodUnits,
+    List<VenomStockDto> VenomUnits
+);
+
+public record ListFacilitiesResponse(
+    List<FacilityResponse> Facilities
 );

@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasPostgresExtension("postgis");
+
         modelBuilder.Entity<User>().HasOne(u => u.FamilyGroup).WithMany(f => f.Members).HasForeignKey(u => u.FamilyGroupId).OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<User>().HasOne(u => u.HomeAddress).WithOne(a => a.User).HasForeignKey<Address>(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
@@ -28,5 +30,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<FamilyGroup>().HasOne(f => f.AdminUser).WithMany().HasForeignKey(f => f.AdminUserId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Incident>().HasMany(i => i.Participants).WithMany();
+
+        modelBuilder.Entity<Facility>().HasIndex(f => f.Location).HasMethod("gist");
     }
 }

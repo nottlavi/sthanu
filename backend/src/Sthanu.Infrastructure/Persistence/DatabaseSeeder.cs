@@ -1,6 +1,7 @@
 namespace Sthanu.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Sthanu.Domain.Entities;
 using Sthanu.Domain.Enums;
 
@@ -24,8 +25,7 @@ public static class DatabaseSeeder
                 City = "Ratlam",
                 State = "Madhya Pradesh",
                 Pincode = "457001",
-                Latitude = 23.3710,
-                Longitude = 75.0230,
+                Location = new Point(75.0230, 23.3710) { SRID = 4326 },
                 ContactPhone = "7412299135",
                 Email = "bloodcentregmcr@gmail.com",
                 BloodUnits = new List<BloodUnit>
@@ -48,8 +48,7 @@ public static class DatabaseSeeder
                 City = "Ratlam",
                 State = "Madhya Pradesh",
                 Pincode = "457001",
-                Latitude = 23.3305,
-                Longitude = 75.0405,
+                Location = new Point(75.0405, 23.3305) { SRID = 4326 },
                 ContactPhone = "9425355887",
                 Email = "manavsevasamitirtm@rediffmail.com",
                 BloodUnits = new List<BloodUnit>
@@ -74,8 +73,7 @@ public static class DatabaseSeeder
                 City = "Ratlam",
                 State = "Madhya Pradesh",
                 Pincode = "457001",
-                Latitude = 23.3312,
-                Longitude = 75.0398,
+                Location = new Point(75.0398, 23.3312) { SRID = 4326 },
                 ContactPhone = "9893442771",
                 Email = "bloodcentredhratlam@gmail.com",
                 BloodUnits = new List<BloodUnit>
@@ -91,7 +89,6 @@ public static class DatabaseSeeder
                 }
             },
 
-            // 4. Jaora BSU
             new Facility
             {
                 FacilityName = "Jaora BSU",
@@ -101,8 +98,7 @@ public static class DatabaseSeeder
                 City = "Jaora",
                 State = "Madhya Pradesh",
                 Pincode = "457226",
-                Latitude = 23.6325,
-                Longitude = 75.1242,
+                Location = new Point(75.1242, 23.6325) { SRID = 4326 },
                 ContactPhone = "07414220025",
                 BloodUnits = new List<BloodUnit>
                 {
@@ -112,7 +108,6 @@ public static class DatabaseSeeder
                 }
             },
 
-            // 5. District Hospital, Mandsaur
             new Facility
             {
                 FacilityName = "District Hospital, Mandsaur",
@@ -122,8 +117,7 @@ public static class DatabaseSeeder
                 City = "Mandsaur",
                 State = "Madhya Pradesh",
                 Pincode = "458001",
-                Latitude = 24.0722,
-                Longitude = 75.0684,
+                Location = new Point(75.0684, 24.0722) { SRID = 4326 },
                 ContactPhone = "9407101767",
                 Email = "dr.stark2406@gmail.com",
                 BloodUnits = new List<BloodUnit>
@@ -139,7 +133,6 @@ public static class DatabaseSeeder
                 }
             },
 
-            // 6. Guru Gautam Muni Blood Centre (Anuyog Hospital)
             new Facility
             {
                 FacilityName = "Guru Gautam Muni Blood Centre",
@@ -149,8 +142,7 @@ public static class DatabaseSeeder
                 City = "Mandsaur",
                 State = "Madhya Pradesh",
                 Pincode = "458001",
-                Latitude = 24.0789,
-                Longitude = 75.0635,
+                Location = new Point(75.0635, 24.0789) { SRID = 4326 },
                 ContactPhone = "9999644664",
                 Email = "anuyoghospital@gmail.com",
                 BloodUnits = new List<BloodUnit>

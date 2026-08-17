@@ -52,7 +52,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseNetTopologySuite()));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>();
@@ -60,6 +62,7 @@ builder.Services.AddScoped<IFamilyService, FamilyService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddHttpClient<ILocationServices, LocationService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
+builder.Services.AddScoped<IFacilityService, FacilityService>();
 
 var supabaseUrl = builder.Configuration["Supabase:Url"];
 

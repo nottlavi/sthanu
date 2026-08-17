@@ -1,5 +1,6 @@
 namespace Sthanu.Domain.Entities;
 
+using NetTopologySuite.Geometries;
 using Sthanu.Domain.Common;
 using Sthanu.Domain.Enums;
 
@@ -15,8 +16,7 @@ public class Facility : BaseEntity
     public required string State { get; set; }
     public required string Pincode { get; set; }
 
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    public required Point Location { get; set; }
 
     public required string ContactPhone { get; set; }
     public string? Email { get; set; }
