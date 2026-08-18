@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Sthanu.Infrastructure.Persistence;
 
@@ -12,16 +12,17 @@ using Sthanu.Infrastructure.Persistence;
 namespace Sthanu.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813203215_SyncUp")]
+    partial class SyncUp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("IncidentUser", b =>
@@ -121,40 +122,10 @@ namespace Sthanu.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Category")
-                        .HasColumnType("text");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ContactPhone")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
                     b.Property<string>("FacilityName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Point>("Location")
-                        .IsRequired()
-                        .HasColumnType("geography(Point, 4326)");
-
-                    b.Property<string>("Pincode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -165,10 +136,6 @@ namespace Sthanu.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Location");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
 
                     b.ToTable("Facilities");
                 });
@@ -212,17 +179,11 @@ namespace Sthanu.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<byte?>("BloodGroup")
-                        .HasColumnType("smallint");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("FamilyId")
                         .HasColumnType("uuid");
-
-                    b.Property<byte>("IncidentType")
-                        .HasColumnType("smallint");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");
@@ -241,17 +202,11 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("smallint");
 
-                    b.Property<int?>("UnitsRequired")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<int?>("VialsRequired")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -312,6 +267,10 @@ namespace Sthanu.Infrastructure.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
