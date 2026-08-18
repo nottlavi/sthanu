@@ -6,7 +6,8 @@ using Sthanu.Domain.Enums;
 public record GetNearestFacilitiesRequest(
     double Latitude,
     double Longitude,
-    Guid IncidentId
+    Guid IncidentId,
+    int? Radius
 );
 
 public record BloodStockDto(

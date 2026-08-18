@@ -31,6 +31,10 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<Incident>().HasMany(i => i.Participants).WithMany();
 
+        modelBuilder.Entity<Facility>()
+            .Property(f => f.Location)
+            .HasColumnType("geography(Point, 4326)");
+
         modelBuilder.Entity<Facility>().HasIndex(f => f.Location).HasMethod("gist");
     }
 }

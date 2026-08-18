@@ -6,5 +6,5 @@ using Sthanu.Domain.Enums;
 public interface IFacilityService
 {
     Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude,
-    double Longitude, Guid incidentId, Guid userId);
+    double Longitude, Guid incidentId, Guid userId, int? Radius);
 }

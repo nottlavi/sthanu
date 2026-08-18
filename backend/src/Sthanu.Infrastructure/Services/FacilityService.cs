@@ -19,7 +19,7 @@ public class FacilityService : IFacilityService
         _db = db;
     }
 
-    public async Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude, double Longitude, Guid incidentId, Guid userId)
+    public async Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude, double Longitude, Guid incidentId, Guid userId, int? Radius)
     {
         var user = await _db.Users.FindAsync(userId);
 
@@ -38,19 +38,24 @@ public class FacilityService : IFacilityService
 
         var userLocation = new Point(Longitude, Latitude) { SRID = 4326 };
 
+
+        var radiusInMeters = Radius * 1000.0;
+
+
+
         List<Facility> facilities;
 
         if (incident.IncidentType == IncidentType.Blood)
         {
             facilities = await _db.Facilities
-          .Include(f => f.BloodUnits).Where(f => f.BloodUnits.Any(b => b.BloodGroup == incident.BloodGroup && b.Quantity > 0))
+          .Include(f => f.BloodUnits).Where(f => f.BloodUnits.Any(b => b.BloodGroup == incident.BloodGroup && b.Quantity > 0)).Where(f => f.Location.Distance(userLocation) <= radiusInMeters)
           .OrderBy(f => f.Location.Distance(userLocation))
           .ToListAsync();
         }
         else
         {
             facilities = await _db.Facilities
-     .Include(f => f.VenomUnits).Where(f => f.VenomUnits.Any(v => v.Quantity > 0))
+     .Include(f => f.VenomUnits).Where(f => f.VenomUnits.Any(v => v.Quantity > 0)).Where(f => f.Location.Distance(userLocation) <= radiusInMeters)
      .OrderBy(f => f.Location.Distance(userLocation))
      .ToListAsync();
         }
