@@ -1,6 +1,6 @@
 "use client";
 
-export type TabType = "radar" | "log" | "leaderboard" | "profile";
+export type TabType = "radar" | "family" | "log" | "leaderboard" | "profile";
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -10,6 +10,7 @@ interface BottomNavProps {
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const tabs: { id: TabType; label: string; icon: string }[] = [
     { id: "radar", label: "Radar", icon: "🚨" },
+    { id: "family", label: "Family", icon: "🛡️" },
     { id: "log", label: "Log", icon: "🩸" },
     { id: "leaderboard", label: "Ranks", icon: "🏆" },
     { id: "profile", label: "Profile", icon: "👤" },

@@ -11,7 +11,6 @@ export default function AuthPage() {
   const [token, setToken] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -81,7 +80,7 @@ export default function AuthPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${activeToken}`,
         },
-        body: JSON.stringify({ firstName, lastName, city }),
+        body: JSON.stringify({ firstName, lastName }),
       });
 
       const data = await res.json();
@@ -181,19 +180,6 @@ export default function AuthPage() {
                 placeholder="Doe"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                required
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-red-500 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs uppercase font-medium text-zinc-400 mb-1">
-                City
-              </label>
-              <input
-                type="text"
-                placeholder="Pune"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
                 required
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-red-500 transition-colors"
               />
