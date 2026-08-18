@@ -21,6 +21,8 @@ public class FacilityService : IFacilityService
 
     public async Task<ListFacilitiesResponse> GetNearByFacilitiesAsync(double Latitude, double Longitude, Guid incidentId, Guid userId)
     {
+        var user = await _db.Users.FindAsync(userId);
+
         var incident = await _db.Incidents.Include(i => i.Participants).FirstOrDefaultAsync(i => i.Id == incidentId);
 
         if (incident == null)
@@ -28,7 +30,8 @@ public class FacilityService : IFacilityService
             throw new Exception("Incident not found.");
         }
 
-        if (incident.UserId != userId && !incident.Participants.Any(p => p.Id == userId))
+        if (incident.UserId != userId && !incident.Participants.Any(p => p.Id == userId) &&
+        !(incident.FamilyId.HasValue && incident.FamilyId == user?.FamilyGroupId))
         {
             throw new Exception("You are not authorized to access this incident.");
         }
@@ -57,7 +60,7 @@ public class FacilityService : IFacilityService
             var distanceMeters = f.Location.Distance(userLocation);
             var distanceKm = Math.Round(distanceMeters / 1000.0, 1);
 
-            var bloodStockDtos = f.BloodUnits.Where(b => b.BloodGroup == incident.BloodGroup).Select(b => new BloodStockDto(
+            var bloodStockDtos = f.BloodUnits.Where(b => b.BloodGroup == incident.BloodGroup).Where(b => b.BloodGroup == incident.BloodGroup).Select(b => new BloodStockDto(
                 b.BloodGroup,
                 b.Quantity
             )).ToList();
@@ -78,9 +81,9 @@ public class FacilityService : IFacilityService
                 f.ContactPhone,
                 f.Email,
                 distanceKm,
-                bloodStockDtos,
-                venomStocksDtos
-            );
+                incident.IncidentType == IncidentType.Blood ? bloodStockDtos : null,
+                incident.IncidentType == IncidentType.Venom ? venomStocksDtos : null
+                );
         }).ToList();
 
         return new ListFacilitiesResponse(facilityResponses);

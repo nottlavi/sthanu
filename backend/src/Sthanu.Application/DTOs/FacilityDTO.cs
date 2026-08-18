@@ -33,7 +33,7 @@ public record FacilityResponse
     string? Email,
     double DistanceKm,
     List<BloodStockDto>? BloodUnits,
-    List<VenomStockDto> VenomUnits
+    List<VenomStockDto>? VenomUnits
 );
 
 public record ListFacilitiesResponse(
