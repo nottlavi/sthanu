@@ -6,6 +6,7 @@ import AuthPage from "./auth/page";
 import BottomNav, { TabType } from "@/components/layout/BottomNav";
 import FamilyTab from "@/components/family/FamilyTab";
 import AddressModal, { AddressData } from "@/components/address/AddressModal";
+import RadarTab from "@/components/radar/RadarTab";
 
 export default function Home() {
   const { user, token, loading, logout } = useAuth();
@@ -79,16 +80,7 @@ export default function Home() {
       </header>
 
       <section className="flex-1 p-4 max-w-md mx-auto w-full">
-        {activeTab === "radar" && (
-          <div className="space-y-4 py-4">
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
-              <h2 className="text-base font-semibold text-zinc-100 mb-1">🚨 Emergency Radar Feed</h2>
-              <p className="text-xs text-zinc-400">
-                Searching real-time inventory within 15km of your location.
-              </p>
-            </div>
-          </div>
-        )}
+        {activeTab === "radar" && <RadarTab savedAddress={savedAddress} />}
 
         {activeTab === "family" && <FamilyTab />}
 

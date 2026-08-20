@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
@@ -11,7 +12,6 @@ using Sthanu.Domain.Enums;
 
 [ApiController]
 [Route("api/[Controller]")]
-[Authorize]
 public class FacilityController : ControllerBase
 {
     private readonly IFacilityService _facilityService;
@@ -23,6 +23,7 @@ public class FacilityController : ControllerBase
         _userService = userService;
     }
 
+    [Authorize]
     [HttpPost("get-nearest")]
     public async Task<IActionResult> GetNearestFacilitiesAsync([FromBody] GetNearestFacilitiesRequest request)
     {
@@ -33,6 +34,8 @@ public class FacilityController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
+
+
         try
         {
             var facilities = await _facilityService.GetNearByFacilitiesAsync(request.Latitude, request.Longitude, request.IncidentId, user.Id, request.Radius ?? 25);
@@ -42,6 +45,22 @@ public class FacilityController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("get-raw")]
+    public async Task<IActionResult>
+    GetRawFacilitiesAsync([FromBody] RawFacilitesFetchReq fetchReq)
+    {
+        try
+        {
+            var facilities = await _facilityService.GetRawFacilitiesAsync(fetchReq);
+
+            return Ok(facilities);
+        }
+        catch (Exception err)
+        {
+            return BadRequest(new { message = err.Message });
         }
     }
 

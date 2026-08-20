@@ -10,6 +10,21 @@ public record GetNearestFacilitiesRequest(
     int? Radius
 );
 
+public record RawFacilitesFetchReq(
+    double Latitude,
+    double Longitude
+);
+
+public record RawFacilityResDTO(
+    string FacilityName,
+    string City,
+    double DistanceKm
+);
+
+public record RawFacilitiesRes(
+    List<RawFacilityResDTO> Facilties
+);
+
 public record BloodStockDto(
     BloodGroup BloodGroup,
     int Quantity
