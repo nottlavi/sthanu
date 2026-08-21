@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { AddressData } from "@/components/address/AddressModal";
 
 interface CreateIncidentModalProps {
   isOpen: boolean;
   onClose: () => void;
   savedAddress: AddressData | null;
+  onIncidentCreated?: () => void;
 }
 
 const BLOOD_GROUPS: { id: number; label: string }[] = [
@@ -24,7 +26,9 @@ export default function CreateIncidentModal({
   isOpen,
   onClose,
   savedAddress,
+  onIncidentCreated,
 }: CreateIncidentModalProps) {
+  const { token } = useAuth();
   const [incidentType, setIncidentType] = useState<1 | 2>(1);
   const [bloodGroup, setBloodGroup] = useState<number>(7);
   const [unitsRequired, setUnitsRequired] = useState<number>(1);
@@ -32,6 +36,144 @@ export default function CreateIncidentModal({
   const [locationChoice, setLocationChoice] = useState<"home" | "gps" | "recent">(
     "home"
   );
+  const [gpsLocation, setGpsLocation] = useState<{
+    locationName: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState("");
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchError, setDispatchError] = useState("");
+
+  const handleSelectGps = () => {
+    setLocationChoice("gps");
+    setGpsError("");
+
+    if (!navigator.geolocation) {
+      setGpsError("GPS location couldn't be found. Please ensure device location is enabled.");
+      return;
+    }
+
+    setGpsLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        try {
+          const res = await fetch(
+            "http://localhost:5289/api/location/reverse-geocode",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ latitude: lat, longitude: lng }),
+            }
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            const place = data.placeName
+              ? `${data.placeName}${data.city ? `, ${data.city}` : ""}`
+              : `GPS (${lat.toFixed(4)}°, ${lng.toFixed(4)}°)`;
+
+            setGpsLocation({
+              locationName: place,
+              latitude: lat,
+              longitude: lng,
+            });
+          }
+        } catch {
+          setGpsLocation({
+            locationName: `GPS (${lat.toFixed(4)}°, ${lng.toFixed(4)}°)`,
+            latitude: lat,
+            longitude: lng,
+          });
+        } finally {
+          setGpsLoading(false);
+        }
+      },
+      () => {
+        setGpsLoading(false);
+        setGpsLocation(null);
+        setGpsError(
+          "GPS location couldn't be found. Please ensure device location is enabled."
+        );
+      }
+    );
+  };
+
+  const handleDispatchEmergency = async () => {
+    let lat = 0;
+    let lng = 0;
+    let locName = "";
+
+    if (locationChoice === "home") {
+      if (!savedAddress) {
+        setDispatchError("No home address saved. Please select Current GPS.");
+        return;
+      }
+      lat = savedAddress.latitude;
+      lng = savedAddress.longitude;
+      locName = `${savedAddress.addressLine}, ${savedAddress.city}`;
+    } else if (locationChoice === "gps") {
+      if (!gpsLocation) {
+        setDispatchError("Please wait for GPS location to lock.");
+        return;
+      }
+      lat = gpsLocation.latitude;
+      lng = gpsLocation.longitude;
+      locName = gpsLocation.locationName;
+    } else {
+      if (!savedAddress) {
+        setDispatchError("No recent location available.");
+        return;
+      }
+      lat = savedAddress.latitude;
+      lng = savedAddress.longitude;
+      locName = `${savedAddress.addressLine}, ${savedAddress.city}`;
+    }
+
+    setDispatching(true);
+    setDispatchError("");
+
+    const payload = {
+      incidentType,
+      locationName: locName,
+      latitude: lat,
+      longitude: lng,
+      bloodGroup: incidentType === 1 ? bloodGroup : null,
+      unitsRequired: incidentType === 1 ? unitsRequired : null,
+      vialsRequired: incidentType === 2 ? vialsRequired : null,
+    };
+
+    try {
+      const res = await fetch("http://localhost:5289/api/incident/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to dispatch emergency alert.");
+      }
+
+      if (onIncidentCreated) {
+        onIncidentCreated();
+      }
+      onClose();
+    } catch (err: any) {
+      setDispatchError(err.message || "Emergency dispatch failed.");
+    } finally {
+      setDispatching(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -64,11 +206,10 @@ export default function CreateIncidentModal({
           <button
             type="button"
             onClick={() => setIncidentType(1)}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              incidentType === 1
-                ? "bg-red-600 text-white shadow-md"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
+            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${incidentType === 1
+              ? "bg-red-600 text-white shadow-md"
+              : "text-zinc-400 hover:text-zinc-200"
+              }`}
           >
             <span>🩸</span>
             <span>Blood Emergency</span>
@@ -76,11 +217,10 @@ export default function CreateIncidentModal({
           <button
             type="button"
             onClick={() => setIncidentType(2)}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              incidentType === 2
-                ? "bg-purple-600 text-white shadow-md"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
+            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${incidentType === 2
+              ? "bg-purple-600 text-white shadow-md"
+              : "text-zinc-400 hover:text-zinc-200"
+              }`}
           >
             <span>🐍</span>
             <span>Snakebite ASV</span>
@@ -99,11 +239,10 @@ export default function CreateIncidentModal({
                     key={bg.id}
                     type="button"
                     onClick={() => setBloodGroup(bg.id)}
-                    className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                      bloodGroup === bg.id
-                        ? "bg-red-950/80 border-red-500 text-red-300 shadow-sm"
-                        : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700"
-                    }`}
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${bloodGroup === bg.id
+                      ? "bg-red-950/80 border-red-500 text-red-300 shadow-sm"
+                      : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                      }`}
                   >
                     {bg.label}
                   </button>
@@ -182,54 +321,79 @@ export default function CreateIncidentModal({
             <button
               type="button"
               onClick={() => setLocationChoice("home")}
-              className={`py-2 rounded-lg font-semibold transition-all ${
-                locationChoice === "home"
-                  ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
+              className={`py-2 rounded-lg font-semibold transition-all ${locationChoice === "home"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+                }`}
             >
               Saved Home
             </button>
             <button
               type="button"
-              onClick={() => setLocationChoice("gps")}
-              className={`py-2 rounded-lg font-semibold transition-all ${
-                locationChoice === "gps"
-                  ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
+              onClick={handleSelectGps}
+              className={`py-2 rounded-lg font-semibold transition-all ${locationChoice === "gps"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+                }`}
             >
               Current GPS
             </button>
             <button
               type="button"
               onClick={() => setLocationChoice("recent")}
-              className={`py-2 rounded-lg font-semibold transition-all ${
-                locationChoice === "recent"
-                  ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
+              className={`py-2 rounded-lg font-semibold transition-all ${locationChoice === "recent"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+                }`}
             >
               Recents
             </button>
           </div>
 
-          <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-300 flex items-center justify-between">
-            <span className="truncate">
-              📍 {savedAddress ? `${savedAddress.addressLine}, ${savedAddress.city}` : "Home Location"}
-            </span>
-            <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
-              Active
-            </span>
-          </div>
+          {locationChoice === "gps" && gpsError ? (
+            <div className="p-3 bg-red-950/40 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{gpsError}</span>
+            </div>
+          ) : (
+            <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-300 flex items-center justify-between">
+              <span className="truncate">
+                {locationChoice === "home" &&
+                  `📍 ${savedAddress ? `${savedAddress.addressLine}, ${savedAddress.city}` : "Home Location"}`}
+                {locationChoice === "gps" &&
+                  (gpsLoading
+                    ? "⏳ Locking Live GPS & Resolving..."
+                    : gpsLocation
+                      ? `📍 ${gpsLocation.locationName}`
+                      : "📍 Live GPS Location")}
+                {locationChoice === "recent" && "📍 Recent Emergency Location"}
+              </span>
+              <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
+                {locationChoice === "gps" && gpsLoading ? "Searching" : "Active"}
+              </span>
+            </div>
+          )}
         </div>
+
+        {dispatchError && (
+          <div className="p-3 bg-red-950/40 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{dispatchError}</span>
+          </div>
+        )}
 
         <div className="pt-2">
           <button
             type="button"
-            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-2xl text-xs transition-colors shadow-xl shadow-red-950/80 uppercase tracking-wider active:scale-[0.99]"
+            onClick={handleDispatchEmergency}
+            disabled={dispatching}
+            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-xs transition-colors shadow-xl shadow-red-950/80 uppercase tracking-wider active:scale-[0.99] flex items-center justify-center min-h-[44px]"
           >
-            📡 Dispatch Emergency Alert
+            {dispatching ? (
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              "📡 Dispatch Emergency Alert"
+            )}
           </button>
         </div>
       </div>
