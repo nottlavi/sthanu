@@ -51,9 +51,11 @@ public class FamilyService : IFamilyService
 
         var familyGroup = await _db.FamilyGroups.Include(f => f.Members).FirstOrDefaultAsync(f => f.Id == user.FamilyGroupId);
 
+        var familyIncidents = await _db.Incidents.Include(i => i.Participants).Where(i => i.FamilyId == user.FamilyGroupId).ToListAsync();
+
         if (familyGroup == null) { throw new Exception("Family group not found"); }
 
-        return MapToFamilyResponse(familyGroup);
+        return MapToFamilyResponse(familyGroup, familyIncidents);
     }
 
     public async Task<FamilyGroupResponse?> JoinFamilyAsync(Guid userId, JoinFamilyRequest request)
@@ -86,7 +88,7 @@ public class FamilyService : IFamilyService
         return MapToFamilyResponse(familyGroup);
     }
 
-    private static FamilyGroupResponse MapToFamilyResponse(FamilyGroup familyGroup)
+    private static FamilyGroupResponse MapToFamilyResponse(FamilyGroup familyGroup, List<Incident>? incidents = null)
     {
         var memberDtos = familyGroup.Members.Select(m => new FamilyMemberDto(
             m.Id,
@@ -96,12 +98,29 @@ public class FamilyService : IFamilyService
             m.TotalDonations
         )).ToList();
 
+        var incidentDtos = incidents?.Select(i => new FamilyIncidentDto(
+            i.Id,
+            i.UserId,
+            i.IncidentType,
+            i.LocationName,
+        i.Latitude,
+        i.Longitude,
+        i.BloodGroup,
+        i.UnitsRequired,
+        i.VialsRequired,
+        i.ShareCode,
+        i.Status,
+        i.CreatedAtUtc,
+        i.Participants.Select(p => new IncidentParticipantDto(p.Id, p.FirstName, p.LastName, p.PhoneNumber)).ToList())).ToList() ?? new List<FamilyIncidentDto>();
+
+
         return new FamilyGroupResponse(
             familyGroup.Id,
             familyGroup.FamilyName,
             familyGroup.InviteCode,
             familyGroup.PooledCredits,
-            memberDtos
+            memberDtos,
+            incidentDtos
         );
     }
 }

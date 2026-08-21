@@ -1,13 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import AuthPage from "./auth/page";
 import BottomNav, { TabType } from "@/components/layout/BottomNav";
+import FamilyTab from "@/components/family/FamilyTab";
+import AddressModal, { AddressData } from "@/components/address/AddressModal";
 
 export default function Home() {
-  const { user, loading, logout } = useAuth();
+  const { user, token, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("radar");
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!token) return;
+
+      try {
+        const res = await fetch("http://localhost:5289/api/address/get-address", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setSavedAddress(data);
+        }
+      } catch {
+      }
+    };
+
+    fetchAddress();
+  }, [token]);
 
   if (loading) {
     return (
@@ -26,7 +52,17 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold tracking-tight text-red-500 uppercase">Sthanu</h1>
-          <p className="text-[11px] text-zinc-400">📍 Near Swargate, {user.city}</p>
+          <button
+            onClick={() => setIsAddressModalOpen(true)}
+            className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition-colors text-left"
+          >
+            <span className="truncate max-w-[180px]">
+              {savedAddress
+                ? `📍 Home • ${savedAddress.addressLine}, ${savedAddress.city}`
+                : `📍 Set Home Location • ${user?.city || "Tap here"}`}
+            </span>
+            <span className="text-[9px] text-zinc-500">▼</span>
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-800/80 text-emerald-400 font-medium flex items-center gap-1.5">
@@ -53,6 +89,8 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {activeTab === "family" && <FamilyTab />}
 
         {activeTab === "log" && (
           <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
@@ -84,6 +122,12 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <AddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onAddressSaved={(addr) => setSavedAddress(addr)}
+      />
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </main>
