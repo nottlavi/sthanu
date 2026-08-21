@@ -15,7 +15,7 @@ export default function Home() {
   const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);
 
   useEffect(() => {
-    const fetchAddress = async () => {
+    const fetchAddressAndCheckInvite = async () => {
       if (!token) return;
 
       try {
@@ -29,11 +29,35 @@ export default function Home() {
           const data = await res.json();
           setSavedAddress(data);
         }
-      } catch {
+      } catch {}
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("emergencyCode");
+
+      if (code) {
+        try {
+          const resPart = await fetch(
+            `http://localhost:5289/api/incident/participate/${code}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (resPart.ok) {
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+          }
+        } catch {}
       }
     };
 
-    fetchAddress();
+    fetchAddressAndCheckInvite();
   }, [token]);
 
   if (loading) {

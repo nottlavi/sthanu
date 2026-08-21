@@ -77,8 +77,9 @@ export default function RadarTab({ savedAddress }: RadarTabProps) {
     } catch { }
   };
 
-  const copyShareCode = (code: string) => {
-    navigator.clipboard.writeText(code);
+  const copyInviteLink = (code: string) => {
+    const link = `${window.location.origin}?emergencyCode=${code}`;
+    navigator.clipboard.writeText(link);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
@@ -144,6 +145,15 @@ export default function RadarTab({ savedAddress }: RadarTabProps) {
         <div className="space-y-3">
           {activeIncidents.map((incident) => {
             const isOwner = Boolean(user && incident.userId === user.id);
+            const isParticipant = Boolean(
+              user && incident.participants?.some((p) => p.id === user.id)
+            );
+
+            const badgeText = isOwner
+              ? "Your Emergency"
+              : isParticipant
+                ? "Joined Emergency"
+                : "Family Emergency";
 
             return (
               <div
@@ -153,7 +163,7 @@ export default function RadarTab({ savedAddress }: RadarTabProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-red-300 bg-red-950 px-2.5 py-1 rounded-full border border-red-800 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
-                    {isOwner ? "Your Emergency" : " Family Emergency"}
+                    {badgeText}
                   </span>
                   <span className="font-mono text-xs font-bold text-zinc-300 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800">
                     {incident.shareCode}
@@ -183,10 +193,10 @@ export default function RadarTab({ savedAddress }: RadarTabProps) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => copyShareCode(incident.shareCode)}
+                    onClick={() => copyInviteLink(incident.shareCode)}
                     className="text-xs font-bold text-red-300 hover:text-white bg-red-900/50 hover:bg-red-900 px-3 py-1.5 rounded-xl border border-red-800 transition-colors"
                   >
-                    {copiedCode === incident.shareCode ? "✓ Copied!" : "📋 Share Code"}
+                    {copiedCode === incident.shareCode ? "✓ Link Copied!" : "🔗 Copy Invite Link"}
                   </button>
                 </div>
               </div>
