@@ -1,17 +1,10 @@
 namespace Sthanu.Application.DTOs;
 
-
-public record LogDonationReq
-(
-    Stream pdfStream,
-    CancellationToken ct = default
-);
-
 public record LogDonationRes(
-    bool isTamperFree,
-    bool isIssuerTrusted,
+    bool IsTamperFree,
+    bool IsIssuerTrusted,
     string? DonationId,
     string? DonorName,
-    DateTime DonationDate,
+    DateTime? DonationDate,
     string? ErrorMessage
 );

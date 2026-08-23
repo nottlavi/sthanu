@@ -17,4 +17,5 @@ public class User : BaseEntity
     public Address? HomeAddress { get; set; }
 
     public int TotalDonations { get; set; } = 0;
+    public DateTime? NextEligibleDonationDate { get; set; }
 }

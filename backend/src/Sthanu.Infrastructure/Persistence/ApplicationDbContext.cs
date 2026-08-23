@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<FamilyGroup> FamilyGroups { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Incident> Incidents { get; set; }
+    public DbSet<DonationLog> DonationLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,5 +37,9 @@ public class ApplicationDbContext : DbContext
             .HasColumnType("geography(Point, 4326)");
 
         modelBuilder.Entity<Facility>().HasIndex(f => f.Location).HasMethod("gist");
+
+        modelBuilder.Entity<DonationLog>()
+            .HasIndex(d => d.DonationIdNumber)
+            .IsUnique();
     }
 }

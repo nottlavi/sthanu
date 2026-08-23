@@ -30,8 +30,8 @@ public class Program
 
         File.WriteAllBytes(Path.Combine(OutputDir, "gov_authority.cer"), govCert.GetEncoded());
 
-        GenerateSignedPdf("valid_cert_1.pdf", "ERK/2026/100001", "Aarav Sharma", DateTime.UtcNow.AddDays(-2), govKey, govCert);
-        GenerateSignedPdf("valid_cert_2.pdf", "ERK/2026/100002", "Rohan Kulkarni", DateTime.UtcNow.AddDays(-5), govKey, govCert);
+        GenerateSignedPdf("valid_cert_1.pdf", "ERK/2026/100001", "Lavi Arora63", DateTime.UtcNow.AddDays(-2), govKey, govCert);
+        GenerateSignedPdf("valid_cert_2.pdf", "ERK/2026/100002", "Lavi Arora64", DateTime.UtcNow.AddDays(-5), govKey, govCert);
         GenerateSignedPdf("valid_cert_3.pdf", "ERK/2026/100003", "Vikram Deshmukh", DateTime.UtcNow.AddDays(-10), govKey, govCert);
         GenerateSignedPdf("valid_cert_4.pdf", "ERK/2026/100004", "Ananya Joshi", DateTime.UtcNow.AddDays(-1), govKey, govCert);
 
