@@ -28,6 +28,19 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<User>().HasOne(u => u.HomeAddress).WithOne(a => a.User).HasForeignKey<Address>(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Facility)
+            .WithMany()
+            .HasForeignKey(u => u.FacilityId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Facility>()
+            .HasOne(f => f.AdminUser)
+            .WithMany()
+            .HasForeignKey(f => f.AdminUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         modelBuilder.Entity<FamilyGroup>().HasOne(f => f.AdminUser).WithMany().HasForeignKey(f => f.AdminUserId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Incident>().HasMany(i => i.Participants).WithMany();

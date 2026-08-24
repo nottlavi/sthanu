@@ -9,4 +9,5 @@ public interface IFacilityService
     double Longitude, Guid incidentId, Guid userId, int? Radius);
 
     Task<RawFacilitiesRes> GetRawFacilitiesAsync(RawFacilitesFetchReq req);
+    Task<FacilityResponse> UpdateStockAsync(UpdateStockRequest updateStockRequest);
 }

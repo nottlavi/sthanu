@@ -3,6 +3,13 @@ namespace Sthanu.Application.DTOs;
 using System.Threading.Tasks.Dataflow;
 using Sthanu.Domain.Enums;
 
+public enum StockUpdateType
+{
+    Blood = 1,
+    Venom = 2,
+    Both = 3
+}
+
 public record GetNearestFacilitiesRequest(
     double Latitude,
     double Longitude,
@@ -54,4 +61,11 @@ public record FacilityResponse
 
 public record ListFacilitiesResponse(
     List<FacilityResponse> Facilities
+);
+
+public record UpdateStockRequest(
+    Guid FacilityId,
+    StockUpdateType UpdateType,
+List<BloodStockDto>? BloodUnits,
+    int? VenomVials
 );

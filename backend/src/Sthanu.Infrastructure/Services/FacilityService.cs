@@ -103,5 +103,11 @@ public class FacilityService : IFacilityService
 
         return new RawFacilitiesRes(facilities);
     }
+
+
+    public Task<FacilityResponse> UpdateStockAsync(UpdateStockRequest updateStockRequest)
+    {
+        return null;
+    }
 }
 

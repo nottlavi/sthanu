@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Sthanu.Infrastructure.Persistence;
 namespace Sthanu.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260824055502_AddFacilityAdminAndUserFacility")]
+    partial class AddFacilityAdminAndUserFacility
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -347,9 +350,6 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("UserType")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("FacilityId");
@@ -437,7 +437,7 @@ namespace Sthanu.Infrastructure.Migrations
                     b.HasOne("Sthanu.Domain.Entities.User", "AdminUser")
                         .WithMany()
                         .HasForeignKey("AdminUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AdminUser");
                 });
