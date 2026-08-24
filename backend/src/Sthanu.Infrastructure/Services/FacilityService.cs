@@ -3,6 +3,7 @@ namespace Sthanu.Infrastructure.Services;
 using System.Runtime.ConstrainedExecution;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using NetTopologySuite.Geometries;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
@@ -93,4 +94,14 @@ public class FacilityService : IFacilityService
 
         return new ListFacilitiesResponse(facilityResponses);
     }
+
+    public async Task<RawFacilitiesRes> GetRawFacilitiesAsync(RawFacilitesFetchReq req)
+    {
+        var userLocation = new Point(req.Longitude, req.Latitude) { SRID = 4326 };
+
+        var facilities = await _db.Facilities.Where(f => f.Location.Distance(userLocation) <= 25000).OrderBy(f => f.Location.Distance(userLocation)).Select(f => new RawFacilityResDTO(f.FacilityName, f.City, Math.Round(f.Location.Distance(userLocation) / 1000.0, 1))).ToListAsync();
+
+        return new RawFacilitiesRes(facilities);
+    }
 }
+
