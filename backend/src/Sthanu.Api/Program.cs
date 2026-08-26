@@ -63,6 +63,7 @@ builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddHttpClient<ILocationServices, LocationService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
 
 var supabaseUrl = builder.Configuration["Supabase:Url"];
 
