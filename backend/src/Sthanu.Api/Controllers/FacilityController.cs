@@ -64,6 +64,24 @@ public class FacilityController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPut("update-stock")]
+    public async Task<IActionResult> UpdateStockAsync([FromBody] UpdateStockRequest request)
+    {
+        var user = await GetCurrentUserAsync();
+
+        try
+        {
+            var res = await _facilityService.UpdateStockAsync(request, user.Id);
+
+            return Ok(res);
+        }
+        catch (Exception err)
+        {
+            return BadRequest(new { message = err.Message });
+        }
+    }
+
     private async Task<User?> GetCurrentUserAsync()
     {
         var phone = User.FindFirst("phone")?.Value

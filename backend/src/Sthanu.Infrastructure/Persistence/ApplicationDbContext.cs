@@ -12,7 +12,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Facility> Facilities { get; set; }
     public DbSet<BloodUnit> BloodUnits { get; set; }
-    public DbSet<VenomUnit> VenomUnits { get; set; }
     public DbSet<FamilyGroup> FamilyGroups { get; set; }
     public DbSet<Address> Addresses { get; set; }
     public DbSet<Incident> Incidents { get; set; }

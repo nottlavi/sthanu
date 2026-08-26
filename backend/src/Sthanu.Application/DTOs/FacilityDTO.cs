@@ -37,10 +37,6 @@ public record BloodStockDto(
     int Quantity
 );
 
-public record VenomStockDto(
-    int Quantity
-);
-
 public record FacilityResponse
 (
     string FacilityName,
@@ -54,9 +50,9 @@ public record FacilityResponse
     double Longitude,
     string ContactPhone,
     string? Email,
-    double DistanceKm,
+    double? DistanceKm,
     List<BloodStockDto>? BloodUnits,
-    List<VenomStockDto>? VenomUnits
+    int? VenomVialsCount
 );
 
 public record ListFacilitiesResponse(

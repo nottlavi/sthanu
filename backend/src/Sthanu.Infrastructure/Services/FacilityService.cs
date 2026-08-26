@@ -2,6 +2,7 @@ namespace Sthanu.Infrastructure.Services;
 
 using System.Runtime.ConstrainedExecution;
 using System.Threading.Tasks.Dataflow;
+using iText.Kernel.Colors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NetTopologySuite.Geometries;
@@ -55,8 +56,7 @@ public class FacilityService : IFacilityService
         }
         else
         {
-            facilities = await _db.Facilities
-     .Include(f => f.VenomUnits).Where(f => f.VenomUnits.Any(v => v.Quantity > 0)).Where(f => f.Location.Distance(userLocation) <= radiusInMeters)
+            facilities = await _db.Facilities.Where(f => f.VenomVialsCount > 0).Where(f => f.Location.Distance(userLocation) <= radiusInMeters)
      .OrderBy(f => f.Location.Distance(userLocation))
      .ToListAsync();
         }
@@ -70,9 +70,6 @@ public class FacilityService : IFacilityService
                 b.BloodGroup,
                 b.Quantity
             )).ToList();
-
-            var venomStocksDtos = f.VenomUnits.Select(v => new VenomStockDto(v.Quantity))
-            .ToList();
 
             return new FacilityResponse(
                 f.FacilityName,
@@ -88,7 +85,7 @@ public class FacilityService : IFacilityService
                 f.Email,
                 distanceKm,
                 incident.IncidentType == IncidentType.Blood ? bloodStockDtos : null,
-                incident.IncidentType == IncidentType.Venom ? venomStocksDtos : null
+                incident.IncidentType == IncidentType.Venom ? f.VenomVialsCount : null
                 );
         }).ToList();
 
@@ -105,9 +102,79 @@ public class FacilityService : IFacilityService
     }
 
 
-    public Task<FacilityResponse> UpdateStockAsync(UpdateStockRequest updateStockRequest)
+    public async Task<FacilityResponse> UpdateStockAsync(UpdateStockRequest updateStockRequest, Guid userId)
     {
-        return null;
-    }
-}
+        var facility = await _db.Facilities
+    .Include(f => f.BloodUnits)
+    .FirstOrDefaultAsync(f => f.Id == updateStockRequest.FacilityId);
 
+        if (facility == null || facility.AdminUserId != userId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update inventory for this facility.");
+        }
+
+        if (updateStockRequest.UpdateType == StockUpdateType.Blood || updateStockRequest.UpdateType == StockUpdateType.Both)
+        {
+            if (updateStockRequest.BloodUnits == null || updateStockRequest.BloodUnits.Count == 0)
+            {
+                throw new ArgumentException("BloodUnits list is required for Blood stock update.");
+            }
+
+            foreach (var bloodDto in updateStockRequest.BloodUnits)
+            {
+                var existing = facility.BloodUnits.FirstOrDefault(b => b.BloodGroup == bloodDto.BloodGroup);
+
+                if (existing != null)
+                {
+                    existing.Quantity = Math.Max(0, existing.Quantity + bloodDto.Quantity);
+                }
+                else if (bloodDto.Quantity > 0)
+                {
+                    var newUnit = new BloodUnit
+                    {
+                        FacilityId = facility.Id,
+                        BloodGroup = bloodDto.BloodGroup,
+                        Quantity = bloodDto.Quantity
+                    };
+
+                    _db.BloodUnits.Add(newUnit);
+                    facility.BloodUnits.Add(newUnit);
+                }
+            }
+        }
+
+        if (updateStockRequest.UpdateType == StockUpdateType.Venom || updateStockRequest.UpdateType == StockUpdateType.Both)
+        {
+            if (!updateStockRequest.VenomVials.HasValue)
+            {
+                throw new ArgumentException("VenomVials is required for Venom stock update.");
+            }
+
+            facility.VenomVialsCount = Math.Max(0, facility.VenomVialsCount + updateStockRequest.VenomVials.Value);
+        }
+
+        await _db.SaveChangesAsync();
+
+        var bloodStockDtos = facility.BloodUnits.Select(b => new BloodStockDto(b.BloodGroup, b.Quantity)).ToList();
+
+        return new FacilityResponse(
+            facility.FacilityName,
+            facility.Type,
+            facility.Category,
+            facility.Address,
+            facility.City,
+            facility.State,
+            facility.Pincode,
+            facility.Location.Y,
+            facility.Location.X,
+            facility.ContactPhone,
+            facility.Email,
+            null,
+            bloodStockDtos,
+            facility.VenomVialsCount
+        );
+    }
+
+
+
+}

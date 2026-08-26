@@ -25,5 +25,5 @@ public class Facility : BaseEntity
     public User? AdminUser { get; set; }
 
     public ICollection<BloodUnit> BloodUnits { get; set; } = new List<BloodUnit>();
-    public ICollection<VenomUnit> VenomUnits { get; set; } = new List<VenomUnit>();
+    public int VenomVialsCount { get; set; } = 0;
 }

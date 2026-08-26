@@ -11,8 +11,10 @@ public static class DatabaseSeeder
     {
         if (await db.Facilities.AnyAsync())
         {
+            var hasInvalidUnits = await db.BloodUnits.AnyAsync(b => b.FacilityId == Guid.Empty);
             var hasAdmins = await db.Users.AnyAsync(u => u.UserType == UserType.FacilityAdmin);
-            if (hasAdmins)
+
+            if (hasAdmins && !hasInvalidUnits)
             {
                 return;
             }
@@ -173,6 +175,11 @@ public static class DatabaseSeeder
         {
             var data = facilitiesData[i];
             var facilityId = Guid.NewGuid();
+
+            foreach (var b in data.BloodUnits)
+            {
+                b.FacilityId = facilityId;
+            }
 
             var facility = new Facility
             {
