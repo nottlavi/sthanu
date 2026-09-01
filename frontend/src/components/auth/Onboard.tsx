@@ -25,6 +25,10 @@ export default function Onboard() {
     }
   };
 
+  const onProfileComplete = () => {
+    router.push("/");
+  };
+
   return (
     <>
       {currentState === "PHONE" && <PhoneForm onOtpSent={handleOtpSent} />}
@@ -33,7 +37,9 @@ export default function Onboard() {
         <VerifyForm phoneNumber={phoneNumber} onSuccess={handleVerifyOtp} />
       )}
 
-      {currentState === "PROFILE" && <CompleteProfileForm />}
+      {currentState === "PROFILE" && (
+        <CompleteProfileForm onProfileComplete={onProfileComplete} />
+      )}
     </>
   );
 }
