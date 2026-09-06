@@ -19,3 +19,16 @@ export interface CompleteProfileReq {
 }
 
 export type AuthStep = "PHONE" | "VERIFY" | "PROFILE";
+
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email?: string | null;
+  familyGroupId?: string | null;
+  totalDonations?: number;
+  userType?: number;
+  createdAtUtc?: string;
+  homeAddress: string;
+}

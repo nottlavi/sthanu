@@ -26,7 +26,9 @@ public class AddressController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserAddressAsync()
     {
+
         var user = await GetCurrentUserAsync();
+
 
         if (user == null) return Unauthorized(new
         {
@@ -46,7 +48,6 @@ public class AddressController : ControllerBase
                 message = ex.Message
             });
         }
-
     }
 
     [HttpPost("set-address")]
@@ -83,9 +84,15 @@ public class AddressController : ControllerBase
 
     private async Task<User?> GetCurrentUserAsync()
     {
+
         var phone = User.FindFirst("phone")?.Value ?? User.FindFirst(ClaimTypes.MobilePhone)?.Value;
 
+
+
         if (string.IsNullOrEmpty(phone)) return null;
+
+
+
 
         return await _userService.GetUserByPhoneAsync(phone);
     }

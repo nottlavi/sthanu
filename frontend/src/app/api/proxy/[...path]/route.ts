@@ -41,6 +41,9 @@ async function handleProxy(
       headers: headers,
       params: Object.fromEntries(request.nextUrl.searchParams),
     });
+    if (response.status === 204 || response.data === "" || !response.data) {
+      return NextResponse.json(null, { status: 200 });
+    }
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
