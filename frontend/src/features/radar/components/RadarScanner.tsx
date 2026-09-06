@@ -4,50 +4,54 @@ import React, { useEffect, useState } from "react";
 import { Radio, Droplet, Syringe, ChevronRight, Activity } from "lucide-react";
 import { getRawFacilities } from "@/features/radar/api/radar.api";
 import { useUserAddress } from "@/features/address/hooks/useUserAddress";
+import { RawFacility } from "@/types/radar.types";
 
-export interface FacilityBlip {
-  id: string;
-  name: string;
-  type: "blood_bank" | "venom_center" | "dual";
-  distanceKm: number;
-  stockStatus: string;
-  top: string;
-  left: string;
-  bearing?: string;
-}
-
-interface RadarScannerProps {
-  facilities?: FacilityBlip[];
-}
-
-export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
+export default function RadarScanner() {
   const { data: address } = useUserAddress();
 
-  const [selectedFacility, setSelectedFacility] = useState<FacilityBlip | null>(
-    null,
-  );
   const [activeRange, setActiveRange] = useState<10 | 30 | 60>(10);
-  const [filterType, setFilterType] = useState<"ALL" | "BLOOD" | "VENOM">(
-    "ALL",
+
+  const [facilities, setFacilities] = useState<RawFacility[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+
+  // Instantly filter out any facilities that exceed the selected activeRange
+  // This guarantees far facilities vanish immediately when switching e.g. 60KM -> 10KM
+  const visibleFacilities = facilities.filter(
+    (fac) => fac.distanceKm === undefined || fac.distanceKm <= activeRange,
   );
 
-  const filteredFacilities = facilities.filter((fac) => {
-    if (filterType === "BLOOD")
-      return fac.type === "blood_bank" || fac.type === "dual";
-    if (filterType === "VENOM")
-      return fac.type === "venom_center" || fac.type === "dual";
-    return true;
-  });
-
-  // just for testing purposes
   useEffect(() => {
-    if (address?.latitude && address?.longitude) {
-      getRawFacilities({
-        latitude: address.latitude,
-        longitude: address.longitude,
-        distance: activeRange,
-      });
-    }
+    let isCurrent = true;
+
+    const fetchFacilities = async () => {
+      if (address?.latitude && address?.longitude) {
+        setIsScanning(true);
+        try {
+          const res = await getRawFacilities({
+            latitude: address.latitude,
+            longitude: address.longitude,
+            distance: activeRange,
+          });
+
+          if (isCurrent) {
+            setFacilities(
+              Array.isArray(res)
+                ? res
+                : res?.facilties || res?.facilities || [],
+            );
+          }
+        } finally {
+          if (isCurrent) {
+            setIsScanning(false);
+          }
+        }
+      }
+    };
+    fetchFacilities();
+
+    return () => {
+      isCurrent = false;
+    };
   }, [address, activeRange]);
 
   return (
@@ -61,10 +65,12 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
           </div>
           <div className="flex flex-col text-left">
             <span className="text-[11px] font-bold tracking-widest text-white uppercase flex items-center gap-1.5 font-mono">
-              RADAR // 360° ACTIVE
+              {isScanning
+                ? "RECALIBRATING // SWEEPING..."
+                : "RADAR // 360° ACTIVE"}
             </span>
             <span className="text-[10px] text-neutral-500 font-mono">
-              SCANNING RANGE: {activeRange}
+              SCANNING RANGE: {activeRange} KM
             </span>
           </div>
         </div>
@@ -109,7 +115,9 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
 
         {/* 360° Radial Scanner Sweep Beam */}
         <div
-          className="absolute inset-0 rounded-full pointer-events-none animate-spin [animation-duration:4s]"
+          className={`absolute inset-0 rounded-full pointer-events-none animate-spin ${
+            isScanning ? "[animation-duration:2s]" : "[animation-duration:4s]"
+          } transition-all`}
           style={{
             background:
               "conic-gradient(from 0deg at 50% 50%, rgba(244, 63, 94, 0.22) 0deg, rgba(244, 63, 94, 0.05) 30deg, transparent 55deg, transparent 360deg)",
@@ -119,44 +127,53 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
           <div className="absolute top-0 left-1/2 w-[1.5px] h-1/2 -translate-x-1/2 bg-gradient-to-t from-rose-500/70 via-rose-400 to-rose-300 shadow-[0_0_8px_#f43f5e]" />
         </div>
 
-        {/* Scattered Red Facility Dots (Pests on the Spider's Web) */}
-        {filteredFacilities.map((fac) => {
-          const isSelected = selectedFacility?.id === fac.id;
+        {/* Scattered Red Facility Dots from local state */}
+        {visibleFacilities.map((fac, index) => {
+          // Distance-proportional radius from user center (10% min to 43% max of radar canvas)
+          const minRadius = 10;
+          const maxRadius = 43;
+          const ratio =
+            fac.distanceKm !== undefined
+              ? Math.min(Math.max(fac.distanceKm / activeRange, 0.05), 1)
+              : 0.5;
+
+          const radius = minRadius + ratio * (maxRadius - minRadius);
+
+          // Angle distributed around 360° to avoid overlapping
+          const angle =
+            (((index * 137.5 + (fac.facilityName?.length || index) * 31) %
+              360) *
+              Math.PI) /
+            180;
+
+          const left = `${50 + radius * Math.cos(angle)}%`;
+          const top = `${50 + radius * Math.sin(angle)}%`;
 
           return (
             <div
-              key={fac.id}
-              onClick={() => setSelectedFacility(fac)}
-              style={{ top: fac.top, left: fac.left }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+              key={fac.facilityName || index}
+              style={{ top, left }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-10 group transition-all duration-500 ease-out"
             >
-              {/* Pulsing Radar Echo Halo */}
               <div className="relative flex items-center justify-center">
-                <span
-                  className={`absolute rounded-full transition-all duration-300 ${
-                    isSelected
-                      ? "w-7 h-7 bg-rose-500/30 animate-ping"
-                      : "w-5 h-5 bg-rose-500/20 group-hover:scale-150"
-                  }`}
-                />
+                {/* Pulsing Radar Echo Halo */}
+                <span className="absolute w-5 h-5 rounded-full bg-rose-500/20 animate-pulse" />
 
                 {/* Core Red Dot */}
-                <span
-                  className={`rounded-full transition-all duration-200 ${
-                    isSelected
-                      ? "w-3 h-3 bg-rose-500 shadow-[0_0_12px_#f43f5e,0_0_20px_#e11d48] ring-2 ring-white"
-                      : "w-2 h-2 bg-rose-500 shadow-[0_0_8px_#f43f5e] group-hover:scale-125"
-                  }`}
-                />
+                <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]" />
 
                 {/* Micro Hover Tooltip */}
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 whitespace-nowrap">
-                  <div className="px-2 py-1 rounded bg-[#0A0A0A] border border-neutral-800 text-[10px] text-white flex items-center gap-1.5 shadow-xl shadow-black">
+                <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 whitespace-nowrap">
+                  <div className="px-2 py-0.5 rounded bg-[#0A0A0A] border border-neutral-800 text-[10px] text-white flex items-center gap-1 shadow-lg shadow-black">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                    <span className="font-semibold">{fac.name}</span>
-                    <span className="text-neutral-400 font-mono">
-                      ({fac.distanceKm} km)
+                    <span className="font-semibold">
+                      {fac.facilityName} ({fac.city}){" "}
                     </span>
+                    {fac.distanceKm !== undefined && (
+                      <span className="text-neutral-400 font-mono">
+                        ({fac.distanceKm} km)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -182,7 +199,7 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
         </div>
       </div>
 
-      {/* Filter Chips */}
+      {/* Filter Chips
       <div className="flex items-center gap-2">
         <button
           onClick={() => setFilterType("ALL")}
@@ -219,10 +236,10 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
           <Droplet className="w-3 h-3 text-rose-500" />
           <span>Blood Banks</span>
         </button>
-      </div>
+      </div> */}
 
       {/* Selected Facility Tactical Card */}
-      {selectedFacility && (
+      {/* {selectedFacility && (
         <div className="w-full rounded-xl border border-neutral-800 bg-[#0A0A0A] p-3.5 shadow-xl shadow-black flex items-center justify-between text-left transition-all">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-rose-500 shrink-0 mt-0.5">
@@ -262,7 +279,7 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-      )}
+      )} */}
 
       {/* Legend & Radar Stats */}
       <div className="w-full flex items-center justify-around py-2 border-t border-neutral-900 text-[10px] text-neutral-500 font-mono">

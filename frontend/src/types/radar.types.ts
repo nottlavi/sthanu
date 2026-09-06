@@ -5,3 +5,9 @@ export interface getRawReq {
   longitude: number;
   distance?: RadarRange | null;
 }
+
+export interface RawFacility {
+  facilityName: string;
+  city: string;
+  distanceKm: number;
+}
