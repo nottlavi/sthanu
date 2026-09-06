@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Radio, Droplet, Syringe, ChevronRight, Activity } from "lucide-react";
+import { getRawFacilities } from "@/features/radar/api/radar.api";
+import { useUserAddress } from "@/features/address/hooks/useUserAddress";
 
 export interface FacilityBlip {
   id: string;
@@ -19,12 +21,12 @@ interface RadarScannerProps {
 }
 
 export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
+  const { data: address } = useUserAddress();
+
   const [selectedFacility, setSelectedFacility] = useState<FacilityBlip | null>(
     null,
   );
-  const [activeRange, setActiveRange] = useState<"5KM" | "15KM" | "30KM">(
-    "15KM",
-  );
+  const [activeRange, setActiveRange] = useState<10 | 30 | 60>(10);
   const [filterType, setFilterType] = useState<"ALL" | "BLOOD" | "VENOM">(
     "ALL",
   );
@@ -36,6 +38,17 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
       return fac.type === "venom_center" || fac.type === "dual";
     return true;
   });
+
+  // just for testing purposes
+  useEffect(() => {
+    if (address?.latitude && address?.longitude) {
+      getRawFacilities({
+        latitude: address.latitude,
+        longitude: address.longitude,
+        distance: activeRange,
+      });
+    }
+  }, [address, activeRange]);
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5 select-none">
@@ -58,7 +71,7 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
 
         {/* Range Selector Toggles */}
         <div className="flex items-center gap-1 p-0.5 rounded-lg border border-neutral-800 bg-neutral-950 text-[10px] font-mono">
-          {(["5KM", "15KM", "30KM"] as const).map((range) => (
+          {([10, 30, 60] as const).map((range) => (
             <button
               key={range}
               onClick={() => setActiveRange(range)}
@@ -68,7 +81,7 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
                   : "text-neutral-500 hover:text-neutral-300"
               }`}
             >
-              {range}
+              {range}KM
             </button>
           ))}
         </div>
@@ -93,36 +106,6 @@ export default function RadarScanner({ facilities = [] }: RadarScannerProps) {
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-neutral-800/70 pointer-events-none" />
         <div className="absolute top-1/2 left-0 right-0 h-px bg-neutral-800/40 rotate-45 pointer-events-none" />
         <div className="absolute top-1/2 left-0 right-0 h-px bg-neutral-800/40 -rotate-45 pointer-events-none" />
-
-        {/* Cardinal Direction Ticks */}
-        <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-neutral-600 tracking-wider">
-          N
-        </span>
-        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-neutral-600 tracking-wider">
-          S
-        </span>
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold text-neutral-600 tracking-wider">
-          E
-        </span>
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold text-neutral-600 tracking-wider">
-          W
-        </span>
-
-        {/* Distance Range Ring Labels along North Axis */}
-        <span className="absolute top-[17%] left-1/2 ml-1.5 text-[8px] font-mono text-neutral-600 pointer-events-none">
-          {activeRange === "5KM"
-            ? "3.5k"
-            : activeRange === "15KM"
-              ? "10k"
-              : "20k"}
-        </span>
-        <span className="absolute top-[34%] left-1/2 ml-1.5 text-[8px] font-mono text-neutral-600 pointer-events-none">
-          {activeRange === "5KM"
-            ? "1.8k"
-            : activeRange === "15KM"
-              ? "5k"
-              : "10k"}
-        </span>
 
         {/* 360° Radial Scanner Sweep Beam */}
         <div

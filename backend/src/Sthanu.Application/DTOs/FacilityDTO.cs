@@ -19,7 +19,8 @@ public record GetNearestFacilitiesRequest(
 
 public record RawFacilitesFetchReq(
     double Latitude,
-    double Longitude
+    double Longitude,
+    int? distance
 );
 
 public record RawFacilityResDTO(
