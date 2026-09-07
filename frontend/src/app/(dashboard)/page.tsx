@@ -1,3 +1,4 @@
+import CreateIncidentButton from "@/features/incident/components/CreateIncidentButton";
 import RadarScanner from "@/features/radar/components/RadarScanner";
 
 export default function RadarPage() {
@@ -12,6 +13,7 @@ export default function RadarPage() {
         </p>
       </div>
 
+      <CreateIncidentButton />
       <RadarScanner />
     </div>
   );
