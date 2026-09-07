@@ -1,3 +1,5 @@
+using Sthanu.Domain.Entities;
+
 namespace Sthanu.Application.DTOs;
 
 public record SendOtpRequest(
@@ -10,6 +12,3 @@ public record CompleteProfileRequest(
     string FirstName,
     string LastName
 );
-
-
-

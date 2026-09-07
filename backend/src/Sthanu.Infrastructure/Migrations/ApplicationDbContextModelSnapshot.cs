@@ -170,6 +170,9 @@ namespace Sthanu.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Category")
                         .HasColumnType("text");
 
@@ -209,7 +212,12 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("VenomVialsCount")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AdminUserId");
 
                     b.HasIndex("Location");
 
@@ -315,6 +323,9 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("FacilityId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("FamilyGroupId")
                         .HasColumnType("uuid");
 
@@ -339,36 +350,16 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("FamilyGroupId");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Sthanu.Domain.Entities.VenomUnit", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FacilityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Quantity")
+                    b.Property<int>("UserType")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdaedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FacilityId");
 
-                    b.ToTable("VenomUnits");
+                    b.HasIndex("FamilyGroupId");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("IncidentUser", b =>
@@ -419,6 +410,16 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Sthanu.Domain.Entities.Facility", b =>
+                {
+                    b.HasOne("Sthanu.Domain.Entities.User", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AdminUser");
+                });
+
             modelBuilder.Entity("Sthanu.Domain.Entities.FamilyGroup", b =>
                 {
                     b.HasOne("Sthanu.Domain.Entities.User", "AdminUser")
@@ -432,30 +433,24 @@ namespace Sthanu.Infrastructure.Migrations
 
             modelBuilder.Entity("Sthanu.Domain.Entities.User", b =>
                 {
+                    b.HasOne("Sthanu.Domain.Entities.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Sthanu.Domain.Entities.FamilyGroup", "FamilyGroup")
                         .WithMany("Members")
                         .HasForeignKey("FamilyGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("FamilyGroup");
-                });
-
-            modelBuilder.Entity("Sthanu.Domain.Entities.VenomUnit", b =>
-                {
-                    b.HasOne("Sthanu.Domain.Entities.Facility", "Facility")
-                        .WithMany("VenomUnits")
-                        .HasForeignKey("FacilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Facility");
+
+                    b.Navigation("FamilyGroup");
                 });
 
             modelBuilder.Entity("Sthanu.Domain.Entities.Facility", b =>
                 {
                     b.Navigation("BloodUnits");
-
-                    b.Navigation("VenomUnits");
                 });
 
             modelBuilder.Entity("Sthanu.Domain.Entities.FamilyGroup", b =>

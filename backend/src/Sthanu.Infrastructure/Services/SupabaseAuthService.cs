@@ -3,19 +3,24 @@ namespace Sthanu.Infrastructure.Services;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
+using Sthanu.Domain.Entities;
+using Sthanu.Infrastructure.Persistence;
 
 public class SupabaseAuthService : ISupabaseAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly string _supabaseUrl;
     private readonly string _anonKey;
+    private readonly ApplicationDbContext _dbContext;
 
-    public SupabaseAuthService(HttpClient httpClient, IConfiguration config)
+    public SupabaseAuthService(HttpClient httpClient, IConfiguration config, ApplicationDbContext dbContext)
     {
         _httpClient = httpClient;
         _supabaseUrl = config["Supabase:Url"]!;
         _anonKey = config["Supabase:AnonKey"]!;
+        _dbContext = dbContext;
     }
 
     public async Task<(bool Success, string Message)> SendOtpAsync(string phoneNumber)
@@ -68,4 +73,7 @@ public class SupabaseAuthService : ISupabaseAuthService
 
         return (true, accessToken, "OTP verified successfully.");
     }
+
+
+
 }

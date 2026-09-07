@@ -33,7 +33,6 @@ public class UserService : IUserService
     {
         var cleanPhone = phoneNumber.Replace("+", "").Trim();
 
-        Console.WriteLine(cleanPhone);
 
         return await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone);
     }

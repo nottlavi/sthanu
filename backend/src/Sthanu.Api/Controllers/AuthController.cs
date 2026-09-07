@@ -1,6 +1,7 @@
 namespace Sthanu.Api.Controllers;
 
 using System.Security.Claims;
+using iText.Kernel.Colors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sthanu.Application.DTOs;
@@ -48,7 +49,6 @@ public class AuthController : ControllerBase
                 message = "Login successfull",
                 token = accessToken,
                 isProfileComplete = true,
-                user = existingUser
             });
         }
 
@@ -84,6 +84,27 @@ public class AuthController : ControllerBase
             request.LastName,
             phoneNumber
         );
+
+        return Ok(user);
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetCurrentUserAsync()
+    {
+        var phoneNumber = User.FindFirst("phone")?.Value ?? User.FindFirst(ClaimTypes.MobilePhone)?.Value;
+
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            return Unauthorized(new { message = "Phone claims not found in this token." });
+        }
+
+        var user = await _userService.GetUserByPhoneAsync(phoneNumber);
+
+        if (user == null)
+        {
+            return NotFound(new { message = "User profile not found" });
+        }
 
         return Ok(user);
     }

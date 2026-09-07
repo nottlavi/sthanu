@@ -2,6 +2,12 @@ namespace Sthanu.Domain.Entities;
 
 using Sthanu.Domain.Common;
 
+public enum UserType
+{
+    User = 1,
+    FacilityAdmin = 2
+}
+
 public class User : BaseEntity
 {
     public required string FirstName { get; set; }
@@ -18,4 +24,9 @@ public class User : BaseEntity
 
     public int TotalDonations { get; set; } = 0;
     public DateTime? NextEligibleDonationDate { get; set; }
+
+    public UserType UserType { get; set; } = (UserType)1;
+
+    public Guid? FacilityId { get; set; }
+    public Facility? Facility { get; set; }
 }
