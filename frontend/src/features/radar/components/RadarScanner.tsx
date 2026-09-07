@@ -1,18 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Radio, Droplet, Syringe, ChevronRight, Activity } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import { getRawFacilities } from "@/features/radar/api/radar.api";
 import { useUserAddress } from "@/features/address/hooks/useUserAddress";
 import { RawFacility } from "@/types/radar.types";
+import { useGeoLocation } from "@/features/address/hooks/useGeoLocation";
 
 export default function RadarScanner() {
   const { data: address } = useUserAddress();
+  const { getLocation, latitude, longitude } = useGeoLocation();
 
   const [activeRange, setActiveRange] = useState<10 | 30 | 60>(10);
 
   const [facilities, setFacilities] = useState<RawFacility[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+
+  const [locationMode, setLocationMode] = useState<"HOME" | "GPS">("HOME");
 
   // Instantly filter out any facilities that exceed the selected activeRange
   // This guarantees far facilities vanish immediately when switching e.g. 60KM -> 10KM
@@ -20,30 +24,33 @@ export default function RadarScanner() {
     (fac) => fac.distanceKm === undefined || fac.distanceKm <= activeRange,
   );
 
+  const activeCoords =
+    locationMode === "HOME"
+      ? { lat: address?.latitude, lng: address?.longitude }
+      : { lat: latitude, lng: longitude };
+
   useEffect(() => {
     let isCurrent = true;
 
     const fetchFacilities = async () => {
-      if (address?.latitude && address?.longitude) {
-        setIsScanning(true);
-        try {
-          const res = await getRawFacilities({
-            latitude: address.latitude,
-            longitude: address.longitude,
-            distance: activeRange,
-          });
+      if (!activeCoords.lat || !activeCoords.lng) return;
 
-          if (isCurrent) {
-            setFacilities(
-              Array.isArray(res)
-                ? res
-                : res?.facilties || res?.facilities || [],
-            );
-          }
-        } finally {
-          if (isCurrent) {
-            setIsScanning(false);
-          }
+      setIsScanning(true);
+      try {
+        const res = await getRawFacilities({
+          latitude: activeCoords.lat,
+          longitude: activeCoords.lng,
+          distance: activeRange,
+        });
+
+        if (isCurrent) {
+          setFacilities(
+            Array.isArray(res) ? res : res?.facilties || res?.facilities || [],
+          );
+        }
+      } finally {
+        if (isCurrent) {
+          setIsScanning(false);
         }
       }
     };
@@ -52,7 +59,12 @@ export default function RadarScanner() {
     return () => {
       isCurrent = false;
     };
-  }, [address, activeRange]);
+  }, [address, activeRange, activeCoords.lat, activeCoords.lng]);
+
+  //just for testing
+  useEffect(() => {
+    console.log(activeCoords.lat, activeCoords.lng);
+  }, [activeCoords.lat, activeCoords.lng]);
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5 select-none">
@@ -199,101 +211,54 @@ export default function RadarScanner() {
         </div>
       </div>
 
-      {/* Filter Chips
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setFilterType("ALL")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
-            filterType === "ALL"
-              ? "border-neutral-700 bg-neutral-900 text-white"
-              : "border-neutral-800 bg-transparent text-neutral-500 hover:text-neutral-300"
-          }`}
-        >
-          <Activity className="w-3 h-3 text-rose-500" />
-          <span>All Units ({filteredFacilities.length})</span>
-        </button>
-
-        <button
-          onClick={() => setFilterType("VENOM")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
-            filterType === "VENOM"
-              ? "border-neutral-700 bg-neutral-900 text-white"
-              : "border-neutral-800 bg-transparent text-neutral-500 hover:text-neutral-300"
-          }`}
-        >
-          <Syringe className="w-3 h-3 text-rose-400" />
-          <span>Snakebite Centers</span>
-        </button>
-
-        <button
-          onClick={() => setFilterType("BLOOD")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
-            filterType === "BLOOD"
-              ? "border-neutral-700 bg-neutral-900 text-white"
-              : "border-neutral-800 bg-transparent text-neutral-500 hover:text-neutral-300"
-          }`}
-        >
-          <Droplet className="w-3 h-3 text-rose-500" />
-          <span>Blood Banks</span>
-        </button>
-      </div> */}
-
-      {/* Selected Facility Tactical Card */}
-      {/* {selectedFacility && (
-        <div className="w-full rounded-xl border border-neutral-800 bg-[#0A0A0A] p-3.5 shadow-xl shadow-black flex items-center justify-between text-left transition-all">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-rose-500 shrink-0 mt-0.5">
-              {selectedFacility.type === "venom_center" ? (
-                <Syringe className="w-4 h-4" />
-              ) : (
-                <Droplet className="w-4 h-4" />
-              )}
-            </div>
-
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-bold text-white tracking-wide">
-                  {selectedFacility.name}
-                </h4>
-                <span className="text-[9px] font-mono text-neutral-500">
-                  {selectedFacility.bearing}
-                </span>
-              </div>
-              <p className="text-[11px] text-neutral-400 font-mono flex items-center gap-1.5">
-                <span className="text-rose-400 font-semibold">
-                  {selectedFacility.distanceKm} km away
-                </span>
-                <span>•</span>
-                <span className="text-neutral-300">
-                  {selectedFacility.stockStatus}
-                </span>
-              </p>
-            </div>
-          </div>
+      {/* Location Toggle: Home Address vs GPS Live Location */}
+      <div className="w-full flex items-center justify-center py-2 border-t border-neutral-900 font-mono">
+        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-neutral-800 bg-neutral-950 w-full max-w-xs">
+          <button
+            type="button"
+            className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-[11px] font-semibold tracking-wide transition-colors ${
+              locationMode === "HOME"
+                ? "bg-neutral-800 text-white shadow-sm border border-neutral-700/70"
+                : "text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent"
+            }`}
+            onClick={() => {
+              setLocationMode("HOME");
+            }}
+          >
+            <MapPin
+              className={`w-3.5 h-3.5 transition-colors ${
+                locationMode === "HOME"
+                  ? "text-emerald-400"
+                  : "text-neutral-500"
+              }`}
+            />
+            <span>Home Address</span>
+          </button>
 
           <button
             type="button"
-            className="p-1.5 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors ml-2 shrink-0"
-            title="View Route"
+            className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-[11px] font-semibold tracking-wide transition-colors ${
+              locationMode === "GPS"
+                ? "bg-neutral-800 text-white shadow-sm border border-neutral-700/70"
+                : "text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent"
+            }`}
+            onClick={() => {
+              setLocationMode("GPS");
+            }}
           >
-            <ChevronRight className="w-4 h-4" />
+            <Navigation
+              className={`w-3.5 h-3.5 transition-colors ${
+                locationMode === "GPS" ? "text-rose-500" : "text-neutral-500"
+              }`}
+            />
+            <span
+              onClick={() => {
+                getLocation();
+              }}
+            >
+              GPS Live Location
+            </span>
           </button>
-        </div>
-      )} */}
-
-      {/* Legend & Radar Stats */}
-      <div className="w-full flex items-center justify-around py-2 border-t border-neutral-900 text-[10px] text-neutral-500 font-mono">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
-          <span>User Base</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]" />
-          <span>Emergency Units</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Radio className="w-3 h-3 text-neutral-400 animate-pulse" />
-          <span>360° Live Scan</span>
         </div>
       </div>
     </div>
