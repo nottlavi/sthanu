@@ -51,8 +51,6 @@ public class FacilityController : ControllerBase
     public async Task<IActionResult>
     GetRawFacilitiesAsync([FromBody] RawFacilitesFetchReq fetchReq)
     {
-        Console.WriteLine($"{fetchReq.Latitude}, {fetchReq.Longitude}, {fetchReq.distance}");
-
         try
         {
             var facilities = await _facilityService.GetRawFacilitiesAsync(fetchReq);

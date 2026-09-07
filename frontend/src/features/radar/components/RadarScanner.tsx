@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, AlertCircle } from "lucide-react";
 import { getRawFacilities } from "@/features/radar/api/radar.api";
 import { useUserAddress } from "@/features/address/hooks/useUserAddress";
 import { RawFacility } from "@/types/radar.types";
@@ -9,7 +9,7 @@ import { useGeoLocation } from "@/features/address/hooks/useGeoLocation";
 
 export default function RadarScanner() {
   const { data: address } = useUserAddress();
-  const { getLocation, latitude, longitude } = useGeoLocation();
+  const { getLocation, latitude, longitude, error } = useGeoLocation();
 
   const [activeRange, setActiveRange] = useState<10 | 30 | 60>(10);
 
@@ -61,10 +61,12 @@ export default function RadarScanner() {
     };
   }, [address, activeRange, activeCoords.lat, activeCoords.lng]);
 
-  //just for testing
+  // If GPS error occurs, automatically switch back to HOME mode
   useEffect(() => {
-    console.log(activeCoords.lat, activeCoords.lng);
-  }, [activeCoords.lat, activeCoords.lng]);
+    if (error) {
+      setLocationMode("HOME");
+    }
+  }, [error]);
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5 select-none">
@@ -212,7 +214,7 @@ export default function RadarScanner() {
       </div>
 
       {/* Location Toggle: Home Address vs GPS Live Location */}
-      <div className="w-full flex items-center justify-center py-2 border-t border-neutral-900 font-mono">
+      <div className="w-full flex flex-col items-center gap-2 py-2 border-t border-neutral-900 font-mono">
         <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-neutral-800 bg-neutral-950 w-full max-w-xs">
           <button
             type="button"
@@ -244,6 +246,7 @@ export default function RadarScanner() {
             }`}
             onClick={() => {
               setLocationMode("GPS");
+              getLocation();
             }}
           >
             <Navigation
@@ -251,15 +254,17 @@ export default function RadarScanner() {
                 locationMode === "GPS" ? "text-rose-500" : "text-neutral-500"
               }`}
             />
-            <span
-              onClick={() => {
-                getLocation();
-              }}
-            >
-              GPS Live Location
-            </span>
+            <span>GPS Live Location</span>
           </button>
         </div>
+
+        {/* Error Feedback Banner */}
+        {error && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] leading-tight max-w-xs text-center">
+            <AlertCircle className="w-3 h-3 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
       </div>
     </div>
   );

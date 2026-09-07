@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
 
         var existingUser = await _userService.GetUserByPhoneAsync(request.PhoneNumber);
 
-        // Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(existingUser));
+
 
 
         if (existingUser != null)
