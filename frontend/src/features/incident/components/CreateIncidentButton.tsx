@@ -24,10 +24,12 @@ export default function CreateIncidentButton() {
         <span>Report Emergency Incident</span>
       </button>
 
-      <CreateIncidentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      {isModalOpen && (
+        <CreateIncidentModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </>
   );
 }

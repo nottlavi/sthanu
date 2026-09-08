@@ -13,8 +13,8 @@ export async function saveUserAddress(payload: Address) {
 }
 
 export async function reverseGeoCode(payload: {
-  latitude: number;
-  longitude: number;
+  latitude: number | undefined;
+  longitude: number | undefined;
 }) {
   const response = await apiClient.post("/location/reverse-geocode", payload);
 
