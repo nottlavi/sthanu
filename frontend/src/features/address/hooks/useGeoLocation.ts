@@ -32,7 +32,7 @@ export function useGeoLocation() {
         let friendlyMessage = "Failed to get location";
         if (error.code === error.PERMISSION_DENIED) {
           friendlyMessage =
-            "Please allow location access in your browser settings.";
+            "Please allow location access in your browser settings to use live location.";
         } else if (error.code === error.TIMEOUT) {
           friendlyMessage = "Location request timed out. Please try again.";
         }
