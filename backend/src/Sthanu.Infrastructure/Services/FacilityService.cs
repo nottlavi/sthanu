@@ -39,8 +39,6 @@ public class FacilityService : IFacilityService
 
         var radiusInMeters = Radius * 1000.0;
 
-
-
         List<Facility> facilities;
 
         if (incident.IncidentType == IncidentType.Blood)

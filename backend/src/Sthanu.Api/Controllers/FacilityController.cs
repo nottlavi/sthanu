@@ -33,8 +33,6 @@ public class FacilityController : ControllerBase
             return Unauthorized(new { message = "User not found." });
         }
 
-
-
         try
         {
             var facilities = await _facilityService.GetNearByFacilitiesAsync(request.Latitude, request.Longitude, request.IncidentId, user.Id, request.Radius ?? 25);

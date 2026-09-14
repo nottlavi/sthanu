@@ -5,12 +5,17 @@ import RadarScanner from "@/features/radar/components/RadarScanner";
 import { useUserIncidents } from "@/features/incident/hooks/useUserIncidents";
 import Loading from "@/components/common/Loading";
 import IncidentCard from "@/features/incident/components/IncidentCard";
+import { useState } from "react";
+import { IncidentResponse, IncidentType } from "@/types/incident.types";
+import IncidentDetailModal from "@/features/incident/components/IncidentDetailModal";
 
 export default function DashboardView() {
   const { data: incidents, isLoading } = useUserIncidents();
 
   const activeIncidents = incidents?.filter((inc) => inc.status === 1) ?? [];
   const hasActiveIncident = activeIncidents.length > 0;
+  const [selectedIncident, setSelectedIncident] =
+    useState<IncidentResponse | null>(null);
 
   if (isLoading) {
     return <Loading />;
@@ -37,11 +42,27 @@ export default function DashboardView() {
         </div>
 
         {/* Compact Cards Stack */}
-        <div className="w-full flex flex-col gap-2.5">
+        <div className="w-full flex flex-col gap-2.5 ">
           {activeIncidents.map((incident) => (
-            <IncidentCard key={incident.id} incident={incident} />
+            <div
+              key={incident.id}
+              className="cursor-pointer"
+              onClick={() => {
+                setSelectedIncident(incident);
+              }}
+            >
+              <IncidentCard key={incident.id} incident={incident} />
+            </div>
           ))}
         </div>
+
+        {selectedIncident && (
+          <IncidentDetailModal
+            isOpen={!!selectedIncident}
+            onClose={() => setSelectedIncident(null)}
+            incident={selectedIncident}
+          />
+        )}
       </div>
     );
   }

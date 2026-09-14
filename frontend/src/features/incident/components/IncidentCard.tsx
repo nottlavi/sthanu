@@ -28,8 +28,6 @@ export default function IncidentCard({
 }: IncidentCardProps) {
   const [copied, setCopied] = useState(false);
 
-  console.log(incident);
-
   const isBlood = incident.incidentType === 1;
   const bloodName = incident.bloodGroup
     ? BLOOD_GROUP_REVERSE_MAP[incident.bloodGroup]
