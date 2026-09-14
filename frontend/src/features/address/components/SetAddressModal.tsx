@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { X, Navigation, Loader2, Check } from "lucide-react";
+import { X, Navigation, Loader2, Check, Crosshair } from "lucide-react";
 import { useUserAddress } from "../hooks/useUserAddress";
 import { saveUserAddress, reverseGeoCode } from "../api/address.api";
 import { useGeoLocation } from "../hooks/useGeoLocation";
@@ -31,13 +31,25 @@ export default function SetAddressModal({
   const [city, setCity] = useState(address?.city || "");
   const [state, setState] = useState(address?.state || "");
   const [pincode, setPincode] = useState(address?.pincode || "");
+  const [localLatitude, setLatitude] = useState<number | null>(
+    address?.latitude ?? null,
+  );
+  const [localLongitude, setLongitude] = useState<number | null>(
+    address?.longitude ?? null,
+  );
   const [error, setError] = useState("");
-
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const isTrackingLocation = isGpsLoading || isReverseGeocoding;
+
+  const currentLat = localLatitude ?? latitude ?? address?.latitude ?? null;
+  const currentLng = localLongitude ?? longitude ?? address?.longitude ?? null;
+  const hasCoords =
+    typeof currentLat === "number" &&
+    typeof currentLng === "number" &&
+    (currentLat !== 0 || currentLng !== 0);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +69,8 @@ export default function SetAddressModal({
         city,
         state,
         pincode,
-        latitude: latitude || address?.latitude || 0,
-        longitude: longitude || address?.longitude || 0,
+        latitude: currentLat ?? 0,
+        longitude: currentLng ?? 0,
       };
 
       await saveUserAddress(payload);
@@ -90,6 +102,9 @@ export default function SetAddressModal({
   useEffect(() => {
     if (latitude === null || longitude === null) return;
 
+    setLatitude(latitude);
+    setLongitude(longitude);
+
     const payload = { latitude, longitude };
 
     const reverseGeoCodeAsync = async () => {
@@ -102,6 +117,8 @@ export default function SetAddressModal({
           setCity(res?.city || "");
           setPincode(res?.pincode || "");
           setState(res?.state || "");
+          if (typeof res?.latitude === "number") setLatitude(res.latitude);
+          if (typeof res?.longitude === "number") setLongitude(res.longitude);
         }
       } catch (err: any) {
         setError("Failed to resolve address from GPS coordinates");
@@ -120,6 +137,8 @@ export default function SetAddressModal({
       setCity(address.city || "");
       setState(address.state || "");
       setPincode(address.pincode || "");
+      setLatitude(address.latitude ?? null);
+      setLongitude(address.longitude ?? null);
     }
   }, [address]);
 
@@ -128,7 +147,9 @@ export default function SetAddressModal({
     (landMark || "") === (address?.landmark || "") &&
     (city || "") === (address?.city || "") &&
     (state || "") === (address?.state || "") &&
-    (pincode || "") === (address?.pincode || "");
+    (pincode || "") === (address?.pincode || "") &&
+    (localLatitude ?? null) === (address?.latitude ?? null) &&
+    (localLongitude ?? null) === (address?.longitude ?? null);
 
   if (!isOpen) return null;
 
@@ -138,7 +159,7 @@ export default function SetAddressModal({
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Floating Card anchored directly to the right, below the header */}
-      <div className="absolute right-0 top-full mt-3.5 z-50 w-80 sm:w-[22rem] max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-800 bg-[#0A0A0A] p-4 shadow-2xl shadow-black flex flex-col gap-3.5 select-none">
+      <div className="absolute right-0 top-full mt-3.5 z-50 w-80 sm:w-[22rem] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto rounded-xl border border-neutral-800 bg-[#0A0A0A] p-4 shadow-2xl shadow-black flex flex-col gap-3.5 select-none">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -265,6 +286,73 @@ export default function SetAddressModal({
               required
               className="w-full bg-transparent px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:outline-none tracking-wider disabled:opacity-50"
             />
+          </div>
+
+          {/* Current Locked Coordinates */}
+          <div className="rounded-lg border border-neutral-800 bg-neutral-950 p-2.5 flex flex-col gap-2 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Crosshair
+                  className={`w-3.5 h-3.5 ${
+                    hasCoords ? "text-emerald-400" : "text-neutral-500"
+                  }`}
+                />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium">
+                  Coordinates
+                </span>
+              </div>
+
+              {isTrackingLocation ? (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-[9px] font-mono text-rose-400 tracking-wide">
+                  <Loader2 className="w-2.5 h-2.5 animate-spin text-rose-400" />
+                  ACQUIRING
+                </span>
+              ) : hasCoords ? (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono text-emerald-400 font-semibold tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
+                  LOCKED
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-[9px] font-mono text-neutral-500 tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+                  UNSET
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 font-mono">
+              <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-neutral-900/80 border border-neutral-800/80">
+                <span className="text-[9px] text-neutral-500 uppercase font-semibold">
+                  LAT
+                </span>
+                <span
+                  className={`text-[11px] font-medium tracking-tight ${
+                    hasCoords ? "text-neutral-200" : "text-neutral-600"
+                  }`}
+                >
+                  {hasCoords ? Number(currentLat).toFixed(5) : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-neutral-900/80 border border-neutral-800/80">
+                <span className="text-[9px] text-neutral-500 uppercase font-semibold">
+                  LNG
+                </span>
+                <span
+                  className={`text-[11px] font-medium tracking-tight ${
+                    hasCoords ? "text-neutral-200" : "text-neutral-600"
+                  }`}
+                >
+                  {hasCoords ? Number(currentLng).toFixed(5) : "—"}
+                </span>
+              </div>
+            </div>
+
+            {!hasCoords && (
+              <p className="text-[10px] text-neutral-500 font-mono leading-tight">
+                Coordinates unset. Use GPS above to capture exact coordinates
+                for radar accuracy.
+              </p>
+            )}
           </div>
 
           {/* Save Button */}

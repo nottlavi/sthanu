@@ -92,11 +92,10 @@ public class FacilityService : IFacilityService
     {
         var userLocation = new Point(req.Longitude, req.Latitude) { SRID = 4326 };
 
-        var facilities = await _db.Facilities.Where(f => f.Location.Distance(userLocation) <= 25000).OrderBy(f => f.Location.Distance(userLocation)).Select(f => new RawFacilityResDTO(f.FacilityName, f.City, Math.Round(f.Location.Distance(userLocation) / 1000.0, 1))).ToListAsync();
+        var facilities = await _db.Facilities.Where(f => f.Location.Distance(userLocation) <= (req.distance * 1000 ?? 25000)).OrderBy(f => f.Location.Distance(userLocation)).Select(f => new RawFacilityResDTO(f.FacilityName, f.City, Math.Round(f.Location.Distance(userLocation) / 1000.0, 1))).ToListAsync();
 
         return new RawFacilitiesRes(facilities);
     }
-
 
     public async Task<FacilityResponse> UpdateStockAsync(UpdateStockRequest updateStockRequest, Guid userId)
     {
@@ -170,7 +169,4 @@ public class FacilityService : IFacilityService
             facility.VenomVialsCount
         );
     }
-
-
-
 }

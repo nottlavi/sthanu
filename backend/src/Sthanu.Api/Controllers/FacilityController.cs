@@ -4,11 +4,10 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
-using Sthanu.Domain.Enums;
+
 
 [ApiController]
 [Route("api/[Controller]")]
