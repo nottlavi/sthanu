@@ -16,6 +16,10 @@ import {
 import { useUserFamily } from "../hooks/useUserFamily";
 import Loading from "@/components/common/Loading";
 import IncidentCard from "@/features/incident/components/IncidentCard";
+import IncidentDetailModal from "@/features/incident/components/IncidentDetailModal";
+import { IncidentResponse, IncidentType } from "@/types/incident.types";
+import { joinFamily } from "../api/family.api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function FamilyView() {
   const { data: family, isLoading } = useUserFamily();
@@ -23,6 +27,26 @@ export default function FamilyView() {
   // Pure UI state for the No-Family onboarding tab & copy feedback
   const [activeTab, setActiveTab] = useState<"CREATE" | "JOIN">("CREATE");
   const [copied, setCopied] = useState(false);
+  const [selectedIncident, setSelectedIncident] =
+    useState<IncidentResponse | null>(null);
+  const [inviteCode, setInviteCode] = useState("");
+  const [familyName, setFamilyName] = useState("");
+
+  const queryClient = useQueryClient();
+
+  const handleJoinFamily = async () => {
+    if (inviteCode.trim() === "") return;
+
+    try {
+      const res = await joinFamily({ inviteCode });
+
+      await queryClient.invalidateQueries({ queryKey: ["userFamily"] });
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to join family";
+      console.error(errorMessage);
+    }
+  };
 
   // 1. Loading State
   if (isLoading) {
@@ -95,6 +119,8 @@ export default function FamilyView() {
                   type="text"
                   placeholder="e.g. Sharma Family"
                   className="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                  value={familyName}
+                  onChange={(e) => setFamilyName(e.target.value)}
                 />
               </div>
               <p className="text-[10px] text-neutral-500 leading-relaxed">
@@ -118,6 +144,10 @@ export default function FamilyView() {
                   type="text"
                   placeholder="e.g. FAM-8492"
                   className="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-neutral-600 uppercase tracking-widest focus:outline-none focus:border-cyan-500/50 transition-colors"
+                  value={inviteCode}
+                  onChange={(e) => {
+                    setInviteCode(e.target.value);
+                  }}
                 />
               </div>
               <p className="text-[10px] text-neutral-500 leading-relaxed">
@@ -127,6 +157,7 @@ export default function FamilyView() {
               <button
                 type="button"
                 className="w-full py-2.5 mt-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                onClick={handleJoinFamily}
               >
                 <span>JOIN FAMILY GROUP</span>
               </button>
@@ -221,12 +252,22 @@ export default function FamilyView() {
           {family.familyIncidents && family.familyIncidents.length > 0 ? (
             <div className="flex flex-col gap-2">
               {family.familyIncidents.map((incident) => (
-                <IncidentCard
+                <div
                   key={incident.id}
-                  incident={incident}
-                  tag="FAMILY"
-                />
+                  onClick={() => {
+                    setSelectedIncident(incident);
+                  }}
+                >
+                  <IncidentCard incident={incident} tag="FAMILY" />
+                </div>
               ))}
+              {selectedIncident && (
+                <IncidentDetailModal
+                  incident={selectedIncident}
+                  isOpen={!!selectedIncident}
+                  onClose={() => setSelectedIncident(null)}
+                />
+              )}
             </div>
           ) : (
             <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-center gap-2.5 text-[10px] text-emerald-400/90 font-medium">

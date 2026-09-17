@@ -24,3 +24,7 @@ export interface FamilyGroupResponse {
   members: FamilyMemberDto[];
   familyIncidents?: IncidentResponse[] | null;
 }
+
+export interface JoinFamilyReq {
+  inviteCode: string;
+}

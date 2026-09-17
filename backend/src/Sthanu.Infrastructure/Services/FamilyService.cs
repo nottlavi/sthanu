@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
+using Sthanu.Domain.Enums;
 using Sthanu.Infrastructure.Persistence;
 
 namespace Sthanu.Infrastructure.Services;
@@ -51,7 +52,7 @@ public class FamilyService : IFamilyService
 
         var familyGroup = await _db.FamilyGroups.Include(f => f.Members).FirstOrDefaultAsync(f => f.Id == user.FamilyGroupId);
 
-        var familyIncidents = await _db.Incidents.Include(i => i.Participants).Where(i => i.FamilyId == user.FamilyGroupId).ToListAsync();
+        var familyIncidents = await _db.Incidents.Include(i => i.Participants).Where(i => i.FamilyId == user.FamilyGroupId).Where(i => i.Status == IncidentStatus.Active).ToListAsync();
 
         if (familyGroup == null) { throw new Exception("Family group not found"); }
 
