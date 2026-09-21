@@ -28,3 +28,7 @@ export interface FamilyGroupResponse {
 export interface JoinFamilyReq {
   inviteCode: string;
 }
+
+export interface createFamReq {
+  familyName: string;
+}

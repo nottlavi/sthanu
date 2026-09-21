@@ -18,7 +18,7 @@ import Loading from "@/components/common/Loading";
 import IncidentCard from "@/features/incident/components/IncidentCard";
 import IncidentDetailModal from "@/features/incident/components/IncidentDetailModal";
 import { IncidentResponse, IncidentType } from "@/types/incident.types";
-import { joinFamily } from "../api/family.api";
+import { createFamily, joinFamily } from "../api/family.api";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function FamilyView() {
@@ -45,6 +45,19 @@ export default function FamilyView() {
       const errorMessage =
         err.response?.data?.message || "Failed to join family";
       console.error(errorMessage);
+    }
+  };
+
+  const hanleCreateFamily = async () => {
+    if (familyName.trim() == "") return;
+
+    try {
+      const res = await createFamily({ familyName });
+
+      await queryClient.invalidateQueries({ queryKey: ["userFamily"] });
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Failed to create family";
+      console.error(message);
     }
   };
 
@@ -130,6 +143,7 @@ export default function FamilyView() {
               <button
                 type="button"
                 className="w-full py-2.5 mt-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                onClick={hanleCreateFamily}
               >
                 <span>CREATE FAMILY GROUP</span>
               </button>
