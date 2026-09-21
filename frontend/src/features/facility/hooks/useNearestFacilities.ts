@@ -6,15 +6,17 @@ export function useNearestFacilites(
   latitude?: number | null,
   longitude?: number | null,
   incidentId?: string,
+  radius: number = 25,
 ) {
   return useQuery<Facility[]>({
-    queryKey: ["facilities", latitude, longitude, incidentId],
+    queryKey: ["facilities", latitude, longitude, incidentId, radius],
 
     queryFn: () =>
       fetchFacilites({
         latitude: latitude!,
         longitude: longitude!,
         incidentId: incidentId!,
+        radius,
       }),
 
     enabled: Boolean(latitude && longitude && incidentId),

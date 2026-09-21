@@ -43,6 +43,7 @@ export default function IncidentDetailModal({
   const [activeOrigin, setActiveOrigin] = useState<"INCIDENT" | "GPS" | "HOME">(
     "INCIDENT",
   );
+  const [selectedRadius, setSelectedRadius] = useState<number>(30);
 
   if (!isOpen || !incident) return null;
 
@@ -81,7 +82,12 @@ export default function IncidentDetailModal({
   }, [error, activeOrigin]);
 
   const { data: facilities, isLoading: isFacilitiesLoading } =
-    useNearestFacilites(targetCoords.lat, targetCoords.lng, incident?.id);
+    useNearestFacilites(
+      targetCoords.lat,
+      targetCoords.lng,
+      incident?.id,
+      selectedRadius,
+    );
 
   const facilityList = Array.isArray(facilities)
     ? facilities
@@ -255,12 +261,29 @@ export default function IncidentDetailModal({
 
         {/* 5. Nearest Equipped Facilities Directory */}
         <div className="flex flex-col gap-2.5 p-3 rounded-xl border border-neutral-800/80 bg-neutral-950/60">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-wider text-neutral-400 flex items-center gap-1">
               <Building2 className="w-3 h-3 text-cyan-400" />
-              <span>EQUIPPED FACILITIES WITH STOCK</span>
+              <span>EQUIPPED FACILITIES</span>
             </span>
-            <span className="text-[9px] text-neutral-500">LIVE DIRECTORY</span>
+
+            {/* Tactical Radius Pill Selector */}
+            <div className="flex items-center gap-1 p-0.5 rounded-lg border border-neutral-800 bg-neutral-900/60 text-[9px]">
+              {[10, 30, 60].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setSelectedRadius(r)}
+                  className={`px-2 py-0.5 rounded-md font-semibold transition-colors ${
+                    selectedRadius === r
+                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-sm"
+                      : "text-neutral-500 hover:text-neutral-300"
+                  }`}
+                >
+                  {r} KM
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Origin Perspective Switcher */}
@@ -428,7 +451,7 @@ export default function IncidentDetailModal({
               <div className="p-4 rounded-xl border border-neutral-800/60 bg-neutral-900/30 text-center flex flex-col items-center justify-center gap-1 text-neutral-500">
                 <Building2 className="w-4 h-4 text-neutral-600" />
                 <span className="text-[10px] uppercase tracking-wider">
-                  No equipped facilities found within search radius
+                  No equipped facilities found within {selectedRadius}km radius
                 </span>
               </div>
             )}
