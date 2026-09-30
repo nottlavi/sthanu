@@ -61,6 +61,16 @@ export default function RadarScanner() {
     };
   }, [address, activeRange, activeCoords.lat, activeCoords.lng]);
 
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  useEffect(() => {
+    if (latitude && longitude && !error) {
+      setLocationMode("GPS");
+    }
+  }, [latitude, longitude, error]);
+
   // If GPS error occurs, automatically switch back to HOME mode
   useEffect(() => {
     if (error) {
