@@ -5,7 +5,7 @@ import {
   MapPin,
   Droplet,
   Syringe,
-  Copy,
+  Link2,
   Check,
   Users,
   ExternalLink,
@@ -33,8 +33,10 @@ export default function IncidentCard({
     ? BLOOD_GROUP_REVERSE_MAP[incident.bloodGroup]
     : "UNKNOWN";
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(incident.shareCode);
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const inviteUrl = `${window.location.origin}/incident/${incident.shareCode}`;
+    navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -100,20 +102,26 @@ export default function IncidentCard({
 
       {/* 3. Bottom Action Bar: Code on left, Responders & Map on right */}
       <div className="flex items-center justify-between pt-1.5 border-t border-neutral-900 text-[10px]">
-        {/* Share Code Chip */}
+        {/* Invite Link Button */}
         <button
           type="button"
-          onClick={handleCopyCode}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-neutral-800 bg-neutral-950 hover:border-neutral-700 transition-colors"
+          onClick={handleCopyLink}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-neutral-800 bg-neutral-950 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors"
         >
-          <span className="text-[9px] text-neutral-500">CODE:</span>
-          <span className="font-bold text-emerald-400 tracking-wider text-[10px]">
-            {incident.shareCode}
-          </span>
           {copied ? (
-            <Check className="w-3 h-3 text-emerald-400 ml-0.5" />
+            <>
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span className="font-bold text-emerald-400 text-[9px] tracking-wide">
+                LINK COPIED!
+              </span>
+            </>
           ) : (
-            <Copy className="w-3 h-3 text-neutral-500 hover:text-white ml-0.5" />
+            <>
+              <Link2 className="w-3 h-3 text-cyan-400" />
+              <span className="font-bold text-neutral-300 hover:text-white text-[9px] tracking-wide">
+                COPY INVITE LINK
+              </span>
+            </>
           )}
         </button>
 
@@ -130,6 +138,7 @@ export default function IncidentCard({
             href={`https://maps.google.com/?q=${incident.latitude},${incident.longitude}`}
             target="_blank"
             rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-0.5 text-neutral-400 hover:text-white transition-colors"
           >
             <span>Map</span>

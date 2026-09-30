@@ -111,7 +111,7 @@ public class IncidentService : IIncidentService
             throw new Exception("This emergency incident is no longer active.");
         }
 
-        if (incident.UserId == userId || incident.Participants.Any(p => p.Id == userId))
+        if (incident.UserId == userId || incident.Participants.Any(p => p.Id == userId) || incident.FamilyId.HasValue && user.FamilyGroupId == incident.FamilyId)
         {
             throw new Exception("You are not allowed to rejoin.");
         }

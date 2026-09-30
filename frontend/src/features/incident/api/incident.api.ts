@@ -11,6 +11,11 @@ export async function CreateIncident(payload: createIncidentRequest) {
 
 export async function fetchUserIncidents(): Promise<IncidentResponse[]> {
   const res = await apiClient.get("/incident/my-incidents");
+  return res.data;
+}
+
+export async function participateIncident(shareCode: string) {
+  const res = await apiClient.post(`/incident/participate/${shareCode}`);
 
   return res.data;
 }
