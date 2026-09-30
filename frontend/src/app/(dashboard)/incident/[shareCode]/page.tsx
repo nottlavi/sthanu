@@ -3,6 +3,9 @@ import React from "react";
 import Link from "next/link";
 import { Radio, ArrowRight, Shield } from "lucide-react";
 import { participateIncident } from "@/features/incident/api/incident.api";
+import { useUserIncidents } from "@/features/incident/hooks/useUserIncidents";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 interface IncidentJoinPageProps {
   params: { shareCode: string };
@@ -10,12 +13,16 @@ interface IncidentJoinPageProps {
 
 export default function IncidentJoinPage({ params }: IncidentJoinPageProps) {
   const { shareCode } = params;
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const handleJoin = async () => {
     try {
-      const res = await participateIncident(shareCode);
+      await participateIncident(shareCode);
 
-      console.log(res);
+      await queryClient.invalidateQueries({ queryKey: ["my-incidents"] });
+
+      router.push("/");
     } catch (err) {
       console.error(err);
     }
