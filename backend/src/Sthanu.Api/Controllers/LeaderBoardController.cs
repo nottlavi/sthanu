@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
-using Sthanu.Infrastructure.Services;
 
+[ApiController]
+[Route("api/[controller]")]
 public class LeaderBoardController : ControllerBase
 {
     private readonly ILeaderBoardService _leaderBoardService;
@@ -24,7 +25,6 @@ public class LeaderBoardController : ControllerBase
         var user = await GetCurrentUserAsync();
         if (user == null) return Unauthorized();
 
-
         var result = await _leaderBoardService.GetLeaderBoardAsync(user.Id, req);
 
         if (result == null) return NotFound();
@@ -34,7 +34,6 @@ public class LeaderBoardController : ControllerBase
 
     private async Task<User?> GetCurrentUserAsync()
     {
-
         var phone = User.FindFirst("phone")?.Value ?? User.FindFirst(ClaimTypes.MobilePhone)?.Value;
 
         if (string.IsNullOrEmpty(phone)) return null;
