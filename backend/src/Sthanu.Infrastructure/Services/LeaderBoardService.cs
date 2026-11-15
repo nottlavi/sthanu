@@ -3,6 +3,7 @@ using iText.Kernel.Colors;
 using Microsoft.EntityFrameworkCore;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
+using Sthanu.Domain.Entities;
 using Sthanu.Infrastructure.Persistence;
 
 namespace Sthanu.Infrastructure.Services;
@@ -25,17 +26,15 @@ public class LeaderBoardService : ILeaderBoardService
 
         if (leaderBoardReq.Mode == ReqModeType.All)
         {
-            var userCards = await _db.Users.OrderByDescending(u => u.TotalDonations).Take(20).Select(u => new UserCard(u.FirstName, u.LastName, u.HomeAddress.City, u.TotalDonations)).ToListAsync();
+            var userCards = await _db.Users.Where(u => u.UserType != UserType.FacilityAdmin).OrderByDescending(u => u.TotalDonations).Take(20).Select(u => new UserCard(u.FirstName, u.LastName, u.HomeAddress.City, u.TotalDonations)).ToListAsync();
 
-            var userRank = await _db.Users.CountAsync(u => u.TotalDonations > user.TotalDonations) + 1;
+            var userRank = await _db.Users.Where(u => u.UserType != UserType.FacilityAdmin).CountAsync(u => u.TotalDonations > user.TotalDonations) + 1;
 
             return new LeaderBoardRes(userCards, userRank);
         }
 
         else if (leaderBoardReq.Mode == ReqModeType.City)
         {
-
-
             var city = user?.HomeAddress?.City;
 
             if (city == null)
@@ -43,11 +42,16 @@ public class LeaderBoardService : ILeaderBoardService
                 throw new Exception("User doesn't belong to a City yet");
             }
 
-            var userCards = await _db.Users.Where(u => u.HomeAddress.City == city).OrderByDescending(u => u.TotalDonations).Take(20).Select(u => new UserCard(u.FirstName, u.LastName, u.HomeAddress.City, u.TotalDonations)).ToListAsync();
+            var userCards = await _db.Users
+                .Where(u => u.UserType != UserType.FacilityAdmin && u.HomeAddress.City == city)
+                .OrderByDescending(u => u.TotalDonations)
+                .Take(20)
+                .Select(u => new UserCard(u.FirstName, u.LastName, u.HomeAddress.City, u.TotalDonations))
+                .ToListAsync();
 
             var userRank = await _db.Users
-    .Where(u => u.HomeAddress.City == city)
-    .CountAsync(u => u.TotalDonations > user.TotalDonations) + 1;
+                .Where(u => u.UserType != UserType.FacilityAdmin && u.HomeAddress.City == city)
+                .CountAsync(u => u.TotalDonations > user.TotalDonations) + 1;
 
             return new LeaderBoardRes(userCards, userRank);
         }
