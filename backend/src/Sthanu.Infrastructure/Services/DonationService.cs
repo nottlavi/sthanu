@@ -10,6 +10,7 @@ using Npgsql;
 using Sthanu.Application.DTOs;
 using Sthanu.Application.Interfaces;
 using Sthanu.Domain.Entities;
+using Sthanu.Domain.Enums;
 using Sthanu.Infrastructure.Persistence;
 
 namespace Sthanu.Infrastructure.Services;
@@ -33,7 +34,7 @@ public class DonationService : IDonationService
     {
         if (pdfStream == null || pdfStream.Length == 0)
         {
-            return new LogDonationRes(false, false, null, null, null, "Empty payload provided.");
+            return new LogDonationRes(false, false, null, null, null, "Empty payload provided.", DonationStatus.Failed);
         }
 
         using var memoryStream = new MemoryStream();
@@ -49,7 +50,7 @@ public class DonationService : IDonationService
 
             if (signatureNames.Count == 0)
             {
-                return new LogDonationRes(false, false, null, null, null, "No digital signature found in document.");
+                return new LogDonationRes(false, false, null, null, null, "No digital signature found in document.", DonationStatus.Failed);
             }
 
             PdfPKCS7? validSignature = null;
@@ -61,8 +62,22 @@ public class DonationService : IDonationService
 
                 if (!isIntegrityOk || !coversWholeDoc)
                 {
+                    var donationLog = new DonationLog
+                    {
+                        DonorName = null,
+                        UserId = userId,
+                        DonationIdNumber = null,
+                        Status = DonationStatus.Failed,
+                        Message = "Document has been modified or tampered with after signing."
+                    };
+
+                    await _dbContext.DonationLogs.AddAsync(donationLog);
+
+                    await _dbContext.SaveChangesAsync();
+
+
                     _logger.LogWarning("Lock 1 Failure: Signature {Name} failed byte-range or whole-document coverage check.", name);
-                    return new LogDonationRes(false, false, null, null, null, "Document has been modified or tampered with after signing.");
+                    return new LogDonationRes(false, false, null, null, null, "Document has been modified or tampered with after signing.", DonationStatus.Failed);
                 }
                 validSignature = pkcs7;
             }
@@ -75,7 +90,7 @@ public class DonationService : IDonationService
             if (!isIssuerTrusted)
             {
                 _logger.LogWarning("Lock 2 Failure: Untrusted signing certificate authority: {Subject}", signingCert.Subject);
-                return new LogDonationRes(true, false, null, null, null, "Untrusted or self-signed certificate authority.");
+                return new LogDonationRes(true, false, null, null, null, "Untrusted or self-signed certificate authority.", DonationStatus.Failed);
             }
 
             var textBuilder = new System.Text.StringBuilder();
@@ -93,7 +108,7 @@ public class DonationService : IDonationService
 
             if (!dinMatch.Success || !dateMatch.Success)
             {
-                return new LogDonationRes(true, true, null, null, null, "Failed to parse required Donation ID or Date from certificate text.");
+                return new LogDonationRes(true, true, null, null, null, "Failed to parse required Donation ID or Date from certificate text.", DonationStatus.Failed);
             }
 
             var din = dinMatch.Value.Trim();
@@ -109,24 +124,50 @@ public class DonationService : IDonationService
                     var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
                     if (user == null)
                     {
-                        return new LogDonationRes(true, true, din, donorName, donationDate, "User not found.");
+                        return new LogDonationRes(true, true, din, donorName, donationDate, "User not found.", DonationStatus.Failed);
                     }
-
-                    var userFullName = $"{user.FirstName}{user.LastName}".Trim();
 
                     var matchesFirstName = donorName.Contains(user.FirstName, StringComparison.OrdinalIgnoreCase);
-
                     var matchesLastName = donorName.Contains(user.LastName, StringComparison.OrdinalIgnoreCase);
 
+                    // 1. Name Mismatch Check
                     if (!matchesFirstName || !matchesLastName)
                     {
-                        return new LogDonationRes(true, true, din, donorName, donationDate, "Names don't match.");
+                        var failedLog = new DonationLog
+                        {
+                            UserId = userId,
+                            DonationIdNumber = din,
+                            DonorName = donorName,
+                            DonatedAtUtc = donationDate,
+                            Status = DonationStatus.Failed,
+                            Message = "Donor name on certificate does not match profile name."
+                        };
 
+                        await _dbContext.DonationLogs.AddAsync(failedLog, ct);
+                        await _dbContext.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
+
+                        return new LogDonationRes(true, true, din, donorName, donationDate, "Names don't match.", DonationStatus.Failed);
                     }
 
+                    // 2. 90-Day Medical Cooldown Check
                     if (user.NextEligibleDonationDate.HasValue && donationDate < user.NextEligibleDonationDate.Value)
                     {
                         var cooldownExpiry = user.NextEligibleDonationDate.Value.ToString("yyyy-MM-dd");
+
+                        var failedLog = new DonationLog
+                        {
+                            UserId = userId,
+                            DonationIdNumber = din,
+                            DonorName = donorName,
+                            DonatedAtUtc = donationDate,
+                            Status = DonationStatus.Failed,
+                            Message = $"Medical Cooldown Active: Next eligible donation date is {cooldownExpiry}."
+                        };
+
+                        await _dbContext.DonationLogs.AddAsync(failedLog, ct);
+                        await _dbContext.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
 
                         return new LogDonationRes(
                             IsTamperFree: true,
@@ -134,10 +175,12 @@ public class DonationService : IDonationService
                             DonationId: din,
                             DonorName: donorName,
                             DonationDate: donationDate,
-                            ErrorMessage: $"Medical Cooldown Active: You are not eligible to log another donation until {cooldownExpiry}."
-    );
+                            ErrorMessage: $"Medical Cooldown Active: You are not eligible to log another donation until {cooldownExpiry}.",
+                            Status: DonationStatus.Failed
+                        );
                     }
 
+                    // 3. Success Path (All checks passed)
                     var rawHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fileBytes));
 
                     var donationLog = new DonationLog
@@ -148,7 +191,8 @@ public class DonationService : IDonationService
                         DonatedAtUtc = donationDate,
                         BloodBankLicense = "AFMC-PUNE-01",
                         RawHash = rawHash,
-                        IsVerified = true
+                        Status = DonationStatus.Success,
+                        Message = "Success: Logged Donation"
                     };
 
                     await _dbContext.DonationLogs.AddAsync(donationLog, ct);
@@ -169,26 +213,44 @@ public class DonationService : IDonationService
                     await transaction.CommitAsync(ct);
 
                     _logger.LogInformation("Donation successfully logged: DIN {DIN} for User {UserId}", din, userId);
-                    return new LogDonationRes(true, true, din, donorName, donationDate, null);
+                    return new LogDonationRes(true, true, din, donorName, donationDate, null, DonationStatus.Success);
                 }
                 catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
                 {
                     await transaction.RollbackAsync(ct);
                     _logger.LogWarning("Lock 3 Failure: Duplicate DIN claim attempted: {DIN}", din);
-                    return new LogDonationRes(true, true, din, donorName, donationDate, "This certificate (DIN) has already been claimed.");
+
+                    // Record the failed attempt outside the rolled-back transaction
+                    var duplicateLog = new DonationLog
+                    {
+                        UserId = userId,
+                        DonationIdNumber = null,
+                        DonorName = donorName,
+                        DonatedAtUtc = donationDate,
+                        Status = DonationStatus.Failed,
+                        Message = $"Duplicate DIN: Certificate {din} has already been registered."
+                    };
+
+                    await _dbContext.DonationLogs.AddAsync(duplicateLog, ct);
+                    await _dbContext.SaveChangesAsync(ct);
+
+                    return new LogDonationRes(true, true, din, donorName, donationDate, "This certificate (DIN) has already been claimed.", DonationStatus.Failed);
                 }
                 catch (Exception ex)
                 {
+
+
+
                     await transaction.RollbackAsync(ct);
                     _logger.LogError(ex, "Transaction failed while logging donation.");
-                    return new LogDonationRes(true, true, din, donorName, donationDate, "Internal database error processing donation.");
+                    return new LogDonationRes(true, true, din, donorName, donationDate, "Internal database error processing donation.", DonationStatus.Failed);
                 }
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing PDF.");
-            return new LogDonationRes(false, false, null, null, null, "Malformed or corrupted PDF file.");
+            return new LogDonationRes(false, false, null, null, null, "Malformed or corrupted PDF file.", DonationStatus.Failed);
         }
     }
 
@@ -213,5 +275,10 @@ public class DonationService : IDonationService
 
         var chainRoot = chain.ChainElements[^1].Certificate;
         return chainRoot.Thumbprint == trustedRoot.Thumbprint;
+    }
+
+    public Task<UserDonationList> GetUserDonations()
+    {
+        throw new NotImplementedException();
     }
 }

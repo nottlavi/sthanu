@@ -127,22 +127,24 @@ namespace Sthanu.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("DonatedAtUtc")
+                    b.Property<DateTime?>("DonatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DonationIdNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("DonorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("RawHash")
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdaedAtUtc")
                         .HasColumnType("timestamp with time zone");
