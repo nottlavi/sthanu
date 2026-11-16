@@ -22,7 +22,8 @@ public class DonationController : ControllerBase
     }
 
     [HttpPost("log")]
-    public async Task<IActionResult> LogDonationAsync(IFormFile file, CancellationToken ct)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> LogDonationAsync([FromForm] IFormFile file, CancellationToken ct)
     {
         var user = await GetCurrentUserAsync();
         if (user == null)
@@ -48,7 +49,7 @@ public class DonationController : ControllerBase
 
     private async Task<User?> GetCurrentUserAsync()
     {
-        var phone = User.FindFirst("phone")?.Value 
+        var phone = User.FindFirst("phone")?.Value
                    ?? User.FindFirst(ClaimTypes.MobilePhone)?.Value;
 
         if (string.IsNullOrEmpty(phone)) return null;

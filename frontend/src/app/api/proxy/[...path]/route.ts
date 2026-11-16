@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import axios from "axios";
 
 const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:5289";
 
@@ -11,45 +10,51 @@ async function handleProxy(
   try {
     const targetPath = params.path.join("/");
 
-    const targetUrl = `${BACKEND_URL}/api/${targetPath}`;
+    const targetUrl = `${BACKEND_URL}/api/${targetPath}${request.nextUrl.search}`;
 
     const cookieStore = await cookies();
     const token = cookieStore.get("sthanu_token")?.value;
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const contentType = request.headers.get("content-type") || "";
+    const headers: Record<string, string> = {};
 
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    let body = undefined;
+    let body: any = undefined;
+    const fetchInit: RequestInit = {
+      method: request.method,
+      headers: headers,
+    };
 
     if (request.method !== "GET" && request.method !== "HEAD") {
-      try {
-        body = await request.json();
-      } catch (err: any) {
-        body = undefined;
+      if (contentType.includes("multipart/form-data")) {
+        // Forward the exact raw body stream and incoming content-type header (with boundary)
+        headers["Content-Type"] = contentType;
+        body = request.body;
+        // Node's native fetch duplex requirement when streaming request.body
+        (fetchInit as any).duplex = "half";
+      } else {
+        headers["Content-Type"] = contentType || "application/json";
+        body = await request.text();
       }
     }
 
-    const response = await axios({
-      method: request.method,
-      url: targetUrl,
-      data: body,
-      headers: headers,
-      params: Object.fromEntries(request.nextUrl.searchParams),
-    });
-    if (response.status === 204 || response.data === "" || !response.data) {
+    fetchInit.body = body;
+
+    const response = await fetch(targetUrl, fetchInit);
+    if (response.status === 204) {
       return NextResponse.json(null, { status: 200 });
     }
 
-    return NextResponse.json(response.data, { status: response.status });
+    const data = await response.json().catch(() => null);
+    return NextResponse.json(data, { status: response.status });
   } catch (err: any) {
-    const status = err.response?.status || 500;
-    const data = err.response?.data || { message: "Proxy request failed" };
-    return NextResponse.json(data, { status });
+    return NextResponse.json(
+      { message: err.message || "Proxy request failed" },
+      { status: 500 }
+    );
   }
 }
 
