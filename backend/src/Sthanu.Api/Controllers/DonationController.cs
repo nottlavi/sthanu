@@ -23,7 +23,7 @@ public class DonationController : ControllerBase
 
     [HttpPost("log")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> LogDonationAsync([FromForm] IFormFile file, CancellationToken ct)
+    public async Task<IActionResult> LogDonationAsync(IFormFile file, CancellationToken ct)
     {
         var user = await GetCurrentUserAsync();
         if (user == null)
@@ -37,12 +37,28 @@ public class DonationController : ControllerBase
         }
 
         await using var stream = file.OpenReadStream();
+
         var result = await _donationService.VerifyAndLogDonationAsync(user.Id, stream, ct);
 
         if (!result.IsTamperFree || !result.IsIssuerTrusted)
         {
             return BadRequest(result);
         }
+
+        return Ok(result);
+    }
+
+    [HttpGet("my-logs")]
+    public async Task<IActionResult> GetUserDonations()
+    {
+        var user = await GetCurrentUserAsync();
+
+        if (user == null)
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var result = await _donationService.GetUserDonations(user.Id);
 
         return Ok(result);
     }

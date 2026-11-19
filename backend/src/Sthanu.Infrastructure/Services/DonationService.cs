@@ -238,11 +238,15 @@ public class DonationService : IDonationService
                 }
                 catch (Exception ex)
                 {
-
-
-
                     await transaction.RollbackAsync(ct);
                     _logger.LogError(ex, "Transaction failed while logging donation.");
+
+                    var detailedError = ex.InnerException != null
+        ? $"{ex.Message} --> {ex.InnerException.Message}"
+        : ex.Message;
+
+                    Console.WriteLine(detailedError);
+
                     return new LogDonationRes(true, true, din, donorName, donationDate, "Internal database error processing donation.", DonationStatus.Failed);
                 }
             });
@@ -277,8 +281,30 @@ public class DonationService : IDonationService
         return chainRoot.Thumbprint == trustedRoot.Thumbprint;
     }
 
-    public Task<UserDonationList> GetUserDonations()
+    public async Task<UserDonationList> GetUserDonations(Guid userid)
     {
-        throw new NotImplementedException();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userid);
+
+        if (user == null)
+        {
+            return new UserDonationList(Array.Empty<UserDonationDto>(), 0, 1, 10);
+        }
+
+        var query = _dbContext.DonationLogs
+            .Where(f => f.UserId == userid)
+            .OrderByDescending(f => f.CreatedAtUtc);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query.Select(f => new UserDonationDto(
+            f.Id,
+            f.DonationIdNumber ?? string.Empty,
+            f.DonorName ?? string.Empty,
+            f.DonatedAtUtc ?? DateTime.MinValue,
+            f.BloodBankLicense,
+            f.Status
+        )).ToListAsync();
+
+        return new UserDonationList(items, totalCount, 1, totalCount > 0 ? totalCount : 10);
     }
 }
